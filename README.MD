@@ -16,3 +16,16 @@ Beginner dev?
     - Loops
     - Lookaheads
     - ArrayLists
+
+
+# TODO LOG
+-  Improve printing values , currently we cannot add more than one operator assignment;
+-  Allow function calls  / working out a scope system
+-  Refacotoring - organizing different parts of the lexer / some optimizations
+# Changelog
+
+1. 5/2/24 
+ - Added print statements 
+ - Parsed integer variables by their operator type;
+ - Fixed issue with whitespace within left hand assignments;
+ 

@@ -323,6 +323,10 @@ class GenerateAstTree {
         char op = '+'; // Default operator
         int operatorIndex = -1; // Default index
         StringBuilder left = new StringBuilder();
+        /**
+         * @todo  5/3/24
+         * @manage - Possibly make it possible to add multiple operators
+         */
         for (int i = 0; i < statement.length(); i++) {
             char current = statement.charAt(i);
 
@@ -450,7 +454,8 @@ class Transpiler {
                 if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")) {
                     AstObject child = c.children.get(0);
                     for (char kw : _keywords.op_keywords) {
-                        // redo implementation
+                        // 5/3/24
+                        // reimplement operator printing;
                     }
                 } else {
                     for (AstObject ch : c.children) {
