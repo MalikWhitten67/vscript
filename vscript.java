@@ -39,6 +39,7 @@ abstract class AstChildObject {}
 class AstObject {
     String type = "";
     Boolean isGlobal = false;
+    Boolean isVariable = false;
     String left = "";
     String right = "";
     AstObject function;
@@ -97,6 +98,7 @@ class GenerateAstTree {
                 _int.Variable_Name = "";
                 _int.value = "";
                 _int.lines.add(i);
+                _int.isVariable = true;
                 if(data.charAt(i) == ':'){
                     i++;
                     while (i < data.length() && !Character.isWhitespace(data.charAt(i))) { 
@@ -139,9 +141,17 @@ class GenerateAstTree {
             else if(data.substring(i, Math.min(i + 5, data.length())).equals("print")){
                 i+= 5;
                 AstObject _print_statement = new AstObject();
+                _print_statement.type = "print_statement";
+                _print_statement.name = "print";
                 if(data.charAt(i) == '(') i++;
                 while (i < data.length() && data.charAt(i) != ')'){
-                    System.out.println(data.charAt(i));
+                    for(AstObject k : tree.children){
+                        StringBuilder v = new StringBuilder(); 
+                        v.append(data.charAt(i));
+                        if(k.name.contains(v.toString()) && k.isVariable){
+                            _print_statement.value = k.value; 
+                        }
+                    } 
                     i++;
                 }
                 i++;
