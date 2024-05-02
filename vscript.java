@@ -1,6 +1,6 @@
 import java.util.*;
-import java.io.*;
-
+import java.io.*; 
+import keywords.*;
 class ReadFile {
     public String open(String file) {
         try {
@@ -44,7 +44,7 @@ class AstObject {
     String left = "";
     String right = "";
     AstObject function;
-    char operator;
+    char operator ;
     String name = "";
     String Variable_Name = "";
     String return_type = "";
@@ -144,19 +144,14 @@ class GenerateAstTree {
                 AstObject _print_statement = new AstObject();
                 _print_statement.type = "print_statement";
                 _print_statement.name = "print";
+                String _print_body = "";
                 if(data.charAt(i) == '(') i++;
-                while (i < data.length() && data.charAt(i) != ')'){
-                    for(AstObject k : tree.children){
-                        StringBuilder v = new StringBuilder(); 
-                        v.append(data.charAt(i));
-                        if(k.name.contains(v.toString()) && k.isVariable){
-                            _print_statement.value = k.value; 
-                            _print_statement.referencing = "variable";
-                            _print_statement.children.add(k);
-                        }
-                    } 
+                while (i < data.length() && data.charAt(i) != ')'){ 
+                    _print_body += data.charAt(i);
                     i++;
                 } 
+                _print_statement.children.add(parseOperatorStatement(_print_body));
+                _print_statement.value = _print_body;
                 if(!tree.children.contains(_print_statement))  tree.children.add(_print_statement);
                  
                 i++;
@@ -261,7 +256,7 @@ class GenerateAstTree {
                             } 
 
                             String returnStatement = returnExpression.toString().trim(); 
-                            AstObject node = parseReturnStatement(returnStatement); 
+                            AstObject node = parseOperatorStatement(returnStatement); 
                             functionAstObject.params.forEach((p)->{ 
                                 if(node.left.equals(p.name) || node.right.equals(p.name)){
                                     node.function = functionAstObject;
@@ -290,24 +285,39 @@ class GenerateAstTree {
         }
     }
 
-    private AstObject parseReturnStatement(String statement){
-        statement  = statement.trim().replaceAll("\\s+", ""); 
-        AstObject node = new AstObject(); 
-        char[] keywords = {'+', '-', '*', '/', '<', '>', '%', '&'};
+    private AstObject parseOperatorStatement(String statement){ 
+        keyword key = new keyword(); 
+        statement = statement.trim().replaceAll("\\s+", ""); 
+        AstObject node = new AstObject();
+        node.name = "operator_statement"; 
+        node.type = "$op"; 
+        char op = '+'; // Default operator
+        int operatorIndex = -1; // Default index
+    
+        // Find the operator in the statement
         for(int i = 0; i < statement.length(); i++){
-            char current = statement.charAt(i);
-            for(char kw : keywords){
-                if(current == kw){
-                  String left = statement.substring(0,i);
-                  String right = statement.substring(i + 1); 
-                  node.left = left;
-                  node.right = right;
-                  node.operator = kw; 
+            char current = statement.charAt(i);  
+            for(int kk = 0; kk < key.op_keywords.length; kk++){
+                if(current == key.op_keywords[kk]){ 
+                    op = key.op_keywords[kk];
+                    operatorIndex = i; // Update the operator index
+                    break; // Exit the inner loop once operator is found
                 }
             }
-        }
+            if(operatorIndex != -1) { // If operator index is found, exit the outer loop
+                break;
+            }
+        }      
+        StringBuilder left = new StringBuilder();
+        left.append(statement.charAt(operatorIndex - 1));
+        StringBuilder right = new StringBuilder();
+        right.append(statement.charAt(operatorIndex + 1));
+        node.left = left.toString();
+        node.right = right.toString();
+        node.operator = op;
         return node;
     }
+    
 }
 
 /**
@@ -315,8 +325,51 @@ class GenerateAstTree {
  */
 
 class Transpiler{
+    public Boolean isString (String value1){
+         if(value1.startsWith("\"")  && value1.endsWith("\"") || value1.startsWith("'")  && value1.endsWith("'")){
+            return true;
+         }else if(value1.contains("'") || value1.contains("\"")) return true;
+         return false;
+    }
     public void transpile(AstObject node){
-       // todo generate java code from node
+        keyword _keywords = new keyword();
+        node.children.forEach((c)->{ 
+            if(c.type == "print_statement" && c.children.get(0).type == "$op"){
+                AstObject child = c.children.get(0);
+                
+                for(char kw : _keywords.op_keywords){
+                    if(child.operator == kw){
+                        switch (kw) {
+                            case '+':  
+                                if(!isString(child.value)){
+                                  System.out.println(true);
+                                }
+                                break;
+                        
+                            case '-': 
+                            if(!isString(child.value)){ 
+                                int right = 0;
+                                int left = 0;
+                                for(int _child = 0; _child < node.children.size(); _child++){
+                                    AstObject ct = node.children.get(_child); 
+
+                                    if(ct.Variable_Name.equals(child.left)){
+                                        left = Integer.parseInt(ct.value);
+                                    }else if(ct.Variable_Name.equals(child.right)){ 
+                                        right = Integer.parseInt(ct.value);
+                                    }
+                                } 
+                                System.out.println(right - left);
+                            }
+                            break;
+                    
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        });
     }
 }
 
