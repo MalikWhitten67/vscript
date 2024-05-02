@@ -149,7 +149,7 @@ class GenerateAstTree {
                 while (i < data.length() && data.charAt(i) != ')'){ 
                     _print_body += data.charAt(i);
                     i++;
-                } 
+                }  
                 _print_statement.children.add(parseOperatorStatement(_print_body));
                 _print_statement.value = _print_body;
                 if(!tree.children.contains(_print_statement))  tree.children.add(_print_statement);
@@ -286,35 +286,38 @@ class GenerateAstTree {
     }
 
     private AstObject parseOperatorStatement(String statement){ 
-        keyword key = new keyword(); 
-        statement = statement.trim().replaceAll("\\s+", ""); 
+        keyword key = new keyword();  
         AstObject node = new AstObject();
         node.name = "operator_statement"; 
         node.type = "$op"; 
         char op = '+'; // Default operator
-        int operatorIndex = -1; // Default index
-    
-        // Find the operator in the statement
+        int operatorIndex = -1; // Default index 
+        StringBuilder left = new StringBuilder();
         for(int i = 0; i < statement.length(); i++){
-            char current = statement.charAt(i);  
+            char current = statement.charAt(i);    
+            if(current == op){ 
+                break;
+            } 
             for(int kk = 0; kk < key.op_keywords.length; kk++){
                 if(current == key.op_keywords[kk]){ 
                     op = key.op_keywords[kk];
-                    operatorIndex = i; // Update the operator index
+                    operatorIndex = i; // Update the operator index 
+                    i++;
                     break; // Exit the inner loop once operator is found
                 }
-            }
-            if(operatorIndex != -1) { // If operator index is found, exit the outer loop
-                break;
-            }
+            }    
+            left.append(current); 
+            
         }      
-        StringBuilder left = new StringBuilder();
-        left.append(statement.charAt(operatorIndex - 1));
         StringBuilder right = new StringBuilder();
-        right.append(statement.charAt(operatorIndex + 1));
-        node.left = left.toString();
+        for(int i = statement.indexOf(op) + 1; i < statement.length(); i++){
+            char current = statement.charAt(i);      
+            right.append(current);
+        }       
         node.right = right.toString();
+        node.left = left.toString();
         node.operator = op;
+        node.value = statement;
         return node;
     }
     
@@ -340,9 +343,27 @@ class Transpiler{
                 for(char kw : _keywords.op_keywords){
                     if(child.operator == kw){
                         switch (kw) {
-                            case '+':  
-                                if(!isString(child.value)){
-                                  System.out.println(true);
+                            case '+':   
+                                if(isString(child.value)){ 
+                                    child.left = child.left.replaceAll("'", "");
+                                    child.left = child.left.replaceAll("\"", ""); 
+                                    child.right = child.right.replaceAll("'", "");
+                                    child.right = child.right.replaceAll("\"", "");    
+                                    System.out.println(child.left + child.right + "\n");
+
+                                }else {
+                                int right = 0;
+                                int left = 0;
+                                for(int _child = 0; _child < node.children.size(); _child++){
+                                    AstObject ct = node.children.get(_child); 
+
+                                    if(ct.Variable_Name.equals(child.left.trim())){
+                                        left = Integer.parseInt(ct.value);
+                                    }else if(ct.Variable_Name.equals(child.right.trim())){ 
+                                        right = Integer.parseInt(ct.value);
+                                    }
+                                } 
+                                  System.out.print(right + left + "\n");
                                 }
                                 break;
                         
@@ -359,7 +380,7 @@ class Transpiler{
                                         right = Integer.parseInt(ct.value);
                                     }
                                 } 
-                                System.out.println(right - left);
+                                System.out.print(right - left); 
                             }
                             break;
                     
