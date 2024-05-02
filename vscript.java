@@ -175,6 +175,11 @@ class GenerateAstTree {
                 if (hasOperator) {
                     _print_statement.children.add(parseOperatorStatement(_print_body, tree));
                 }
+                for(AstObject child : tree.children){
+                    if(child.isVariable && _print_body.contains(child.Variable_Name)){
+                       _print_statement.children.add(child);
+                    }
+                }
                 _print_statement.value = _print_body;
                 if (!tree.children.contains(_print_statement))
                     tree.children.add(_print_statement);
@@ -320,9 +325,7 @@ class GenerateAstTree {
         StringBuilder left = new StringBuilder();
         for (int i = 0; i < statement.length(); i++) {
             char current = statement.charAt(i);
-            if (current == op) {
-                break;
-            }
+            
             for (int kk = 0; kk < key.op_keywords.length; kk++) {
                 if (current == key.op_keywords[kk]) {
                     op = key.op_keywords[kk];
@@ -331,9 +334,12 @@ class GenerateAstTree {
                     break; // Exit the inner loop once operator is found
                 }
             }
+            if (current == op) {
+                break;
+            }
             left.append(current);
 
-        }
+        } 
         StringBuilder right = new StringBuilder();
         for (int i = statement.indexOf(op) + 1; i < statement.length(); i++) {
             char current = statement.charAt(i);
@@ -397,7 +403,7 @@ class Transpiler {
                 }
                 for(AstObject childObject : node.children){  
                     Boolean isString = isString(childObject.value);
-                    if(childObject.isVariable && parsedAstObject.left.equals(childObject.Variable_Name.trim()) 
+                    if(childObject.isVariable && parsedAstObject.left.trim().contains(childObject.Variable_Name.trim()) 
                      && String.valueOf(parsedAstObject.operator).length() > 0
                     ){  
                         if(isString)  childObject.value = childObject.value.replaceAll("'", "").replaceAll("\"", ""); 
@@ -406,6 +412,7 @@ class Transpiler {
                                 parsedAstObject.left = variable.value;
                             }
                         } 
+                        System.out.println(parsedAstObject.left);
                     }else if(childObject.isVariable && parsedAstObject.right.equals(childObject.Variable_Name.trim())
                       && String.valueOf(parsedAstObject.operator).length() > 0
                     ){
@@ -423,10 +430,18 @@ class Transpiler {
                         case '+': 
                              c.value = String.valueOf(Integer.parseInt(parsedAstObject.left) + Integer.parseInt(parsedAstObject.right));
                             break;
-                    
-                        default:
+                        case '-':
+                           c.value = String.valueOf(Integer.parseInt(parsedAstObject.left) - Integer.parseInt(parsedAstObject.right));
+                           break;
+                        case '*':
+                        c.value = String.valueOf(Integer.parseInt(parsedAstObject.left) * Integer.parseInt(parsedAstObject.right)); 
+                        break;
+                        case '/': 
+                        c.value = String.valueOf(Integer.parseInt(parsedAstObject.left) / Integer.parseInt(parsedAstObject.right)); 
+                        break;
+                        default: 
                             break;
-                    } 
+                    }  
                 }
             }
             else if (c.type == "print_statement") {
@@ -436,8 +451,12 @@ class Transpiler {
                     for (char kw : _keywords.op_keywords) {
                          // redo implementation
                     }
-                } else {
-                    System.out.println(c.value);
+                } else {  
+                    for(AstObject ch : c.children){ 
+                        if(ch.isVariable && c.value.equals(ch.Variable_Name)){
+                            System.out.println(ch.value);
+                        }
+                    }
                 }
 
             }
