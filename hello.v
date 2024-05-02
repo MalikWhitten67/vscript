@@ -1,5 +1,6 @@
+int:global a = 10;
 int:global i = 10;
-print(i);
+print(a + i);
 function calc(int32 a, int32 b) {
     return a + b;
 }

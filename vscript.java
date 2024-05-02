@@ -40,6 +40,7 @@ class AstObject {
     String type = "";
     Boolean isGlobal = false;
     Boolean isVariable = false;
+    String referencing = "";
     String left = "";
     String right = "";
     AstObject function;
@@ -150,12 +151,17 @@ class GenerateAstTree {
                         v.append(data.charAt(i));
                         if(k.name.contains(v.toString()) && k.isVariable){
                             _print_statement.value = k.value; 
+                            _print_statement.referencing = "variable";
+                            _print_statement.children.add(k);
                         }
                     } 
                     i++;
-                }
+                } 
+                if(!tree.children.contains(_print_statement))  tree.children.add(_print_statement);
+                 
                 i++;
             }
+            
             else if (data.substring(i, Math.min(i + 6, data.length())).equals("import")) {
                 System.out.println("yok");
                 i += 6;
@@ -304,13 +310,13 @@ class GenerateAstTree {
     }
 }
 
+/**
+ * Class to transpile ast tree and run it;
+ */
+
 class Transpiler{
     public void transpile(AstObject node){
-       node.children.forEach((c)->{ 
-         if(c.type == "int32"){
-            System.out.println(c.value);
-         }
-       });
+       // todo generate java code from node
     }
 }
 
