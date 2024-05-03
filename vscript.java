@@ -490,6 +490,30 @@ class Transpiler {
                         break;
                     case "+":
                         current += parsed;
+                    case "%":
+                    if (i == 0) {
+                        current = parsed;
+                    }else{
+
+                        current %= parsed;
+                    } 
+                    case ">":  
+                    if (i == 0) {
+                        current = parsed;
+                    }else{
+
+                       if( current >= parsed) current = 1;
+                       else current = 0;
+                    } 
+                    break;
+                    case "<":
+                    if (i == 0) {
+                        current = parsed;
+                    }else{
+
+                       if( current <= parsed) current = 1;
+                       else current = 0;
+                    } 
                     default:
                         break;
                 }
@@ -498,6 +522,67 @@ class Transpiler {
              
         } 
         return  String.valueOf(Math.abs(fullvalue));
+    }
+    private String ParseOperandAsString(ArrayList<String> opperands, AstObject node){  
+        String fullvalue =  ""; 
+        if (opperands.size() > 0) { 
+            int lastvalue = 0; 
+            String operator = ""; 
+            ArrayList<String> results = new ArrayList<>(); // Store results of each group
+
+            String ss = "";
+            for (int i = 0; i < opperands.size(); i++) {
+                String item = opperands.get(i); 
+                if (isOperator(item)) {
+                    operator = item;
+                    if (!ss.isEmpty()) {
+                        results.add(ss);
+                        ss = "";
+                    }
+                } else {
+                    ss += item;
+                }
+                if (i ==  opperands.size() - 1
+                        || isOperator(opperands.get(i + 1))) {
+                    results.add(ss);
+                    ss = "";
+                }
+            }
+            String current = "";
+
+            for (int i = 0; i < results.size(); i++) {
+                String value = String.valueOf(results.toArray()[i]);
+                for (AstObject childAstObject : node.children) {
+                    if (childAstObject.isVariable && childAstObject.Variable_Name.equals(value)) {
+                        value = childAstObject.value;
+                    }
+                } 
+                switch (operator) {
+                    case "*": 
+                         // throw an error
+                        break;
+                    case "/":
+                         // maybe able to calculate length devided by second string length?
+                        break;
+                    case "-": 
+                        break;
+                    case "+":
+                        current += " " + value;
+                    case "%":
+                     
+                    case ">":  
+                     
+                    break;
+                    case "<": 
+                    default:
+                        break;
+                }
+            }
+            fullvalue = current;
+             
+        } 
+        fullvalue = fullvalue.replaceAll("\"", "").replaceAll("'", "").trim();
+        return fullvalue;
     }
 
     /**
@@ -510,7 +595,8 @@ class Transpiler {
         node.children.forEach((c) -> {
             if (c.name == "int32_variable") {
                 GenerateAstTree g = new GenerateAstTree();
-                AstObject parsedAstObject = g.parseOperatorStatement(c.value, c);
+                if(!isString(filename)){}
+                AstObject parsedAstObjectInteger = g.parseOperatorStatement(c.value, c);
                 for (String k : _keywords.system_keywords) {
                     if (c.value.contains(k)) {
                         int index = code.indexOf(c.fullvalue);
@@ -526,17 +612,21 @@ class Transpiler {
                                     + "Line error -> " + c.fullvalue);
                     System.exit(0);
                 }
-                if (parsedAstObject.opperands.size() > 0) { 
-                    c.value = ParseOperandAsInteger(parsedAstObject.opperands, node); 
-                } else {
+                if (parsedAstObjectInteger.opperands.size() > 0 && !isString(c.value)) { 
+                    c.value = ParseOperandAsInteger(parsedAstObjectInteger.opperands, node); 
+                } else if(!isString(c.value)){
                     c.value = String.valueOf(Integer.parseInt(c.value));
+                }else{
+                    System.out.println(c.value);
                 }
             } else if (c.type == "print_statement") {
 
                 if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")) {
                     AstObject child = c.children.get(0);  
-                    if(child.type == "$op"){
+                    if(child.type == "$op" && !isString(c.value)){
                         System.out.println(ParseOperandAsInteger(c.children.get(0).opperands, node));
+                    }else{
+                        System.out.println(ParseOperandAsString(c.children.get(0).opperands, node));
                     }
                 } else {
                     for (AstObject ch : c.children) {
