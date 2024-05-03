@@ -1,9 +1,10 @@
 import java.util.*;
 
-import ErrorHandler.Errors;
+import javax.print.DocFlavor.STRING;
 
-import java.io.*;
+import ErrorHandler.Errors;
 import keywords.*;
+import java.io.*;
 
 class ReadFile {
     public String open(String file) {
@@ -23,6 +24,10 @@ class ReadFile {
         } catch (FileNotFoundException e) {
             throw new Error("File not found: " + e.getMessage()); // Properly handle FileNotFoundException
         }
+    }
+
+    public static void main(String[] args) {
+
     }
 }
 
@@ -86,8 +91,9 @@ class AstObject {
 }
 
 class OperatorAssignmentNode {
-    String value;
-    String operator;
+    ArrayList<String> indexs = new ArrayList<>();
+    ArrayList<String> operators = new ArrayList<>();
+    ArrayList<OperatorNode> lefts_rights = new ArrayList<>();
 }
 
 /**
@@ -333,20 +339,18 @@ class GenerateAstTree {
         char op = '+'; // Default operator
         int operatorIndex = -1; // Default index
         StringBuilder left = new StringBuilder();
-        /**
-         * @todo  5/3/24
-         * @manage - Possibly make it possible to add multiple operators
-         */
+        ArrayList<String> indexs = new ArrayList<>(Collections.nCopies(statement.length(), null));
         Boolean hasOperator = false;
-        for(int kk = 0; kk < key.op_keywords.length; kk++){
-           String i = "";
-           i+= key.op_keywords[kk];
-           
-           if(statement.contains(i)){
-              hasOperator = true;
-           }
-        } 
-        if(!hasOperator){
+        for (int kk = 0; kk < key.op_keywords.length; kk++) {
+            String i = "";
+            i += key.op_keywords[kk];
+
+            if (statement.contains(i)) {
+                indexs.set(kk, i);
+                hasOperator = true;
+            }
+        }
+        if (!hasOperator) {
             node.value = statement;
             return node;
         }
@@ -356,31 +360,16 @@ class GenerateAstTree {
             int shouldSkip = 0;
             for (int kk = 0; kk < key.op_keywords.length; kk++) {
                 if (current == key.op_keywords[kk]) {
-                    op = key.op_keywords[kk];
-                    operatorIndex = i; // Update the operator index
-                    i++;
-                    break; // Exit the inner loop once operator is found
-                }else{
-                    continue;
+                    shouldSkip = 1;
+                    break;
+                } else {
+                    shouldSkip = 0;
                 }
             }
-            if (current == op) {
-                break;
-            }
-            left.append(current);
+            if (Character.isWhitespace(current))
+                continue;
+            Stack.add(String.valueOf(current));
 
-        } 
-        StringBuilder right = new StringBuilder();
-        for (int i = statement.indexOf(op) + 1; i < statement.length(); i++) {
-            char current = statement.charAt(i);
-            right.append(current);
-        }
-        node.right = right.toString().trim();
-        node.left = left.toString().trim(); 
-        // check if current left or right assignment is a variable call;
-        for (AstObject c : tree.children) {
-            if (c.Variable_Name.equals(node.right.trim()) || c.Variable_Name.equals(node.left.trim()))
-                node.isVariable = true;
         }
         node.opperands = Stack;
         node.value = statement;
@@ -454,8 +443,7 @@ class Transpiler {
             if (c.name == "int32_variable") {
                 GenerateAstTree g = new GenerateAstTree();
                 AstObject parsedAstObject = g.parseOperatorStatement(c.value, c);
-                keyword keywords = new keyword();
-                for (String k : keywords.system_keywords) {
+                for (String k : _keywords.system_keywords) {
                     if (c.value.contains(k)) {
                         int index = code.indexOf(c.fullvalue);
                         System.out.print(err.variable_contains_keywords + " \n \tat: " + filename + ":" + index + "\n"
@@ -470,9 +458,12 @@ class Transpiler {
                                     + "Line error -> " + c.fullvalue);
                     System.exit(0);
                 }
-                if (parsedAstObject.opperands.size() > 0) { 
+                if (parsedAstObject.opperands.size() > 0) {
+                    int fullvalue = 0; 
+                    int lastvalue = 0; 
                     String operator = ""; 
-                    ArrayList<String> results = new ArrayList<>();  
+                    ArrayList<String> results = new ArrayList<>(); // Store results of each group
+
                     String ss = "";
                     for (int i = 0; i < parsedAstObject.opperands.size(); i++) {
                         String item = parsedAstObject.opperands.get(i);
@@ -505,7 +496,8 @@ class Transpiler {
 
                         switch (operator) {
                             case "*":
-                                current *= parsed; 
+                                current *= parsed;
+                                lastvalue = parsed;
                                 break;
                             case "/":
                                 if (i == 0) {
@@ -551,8 +543,7 @@ class Transpiler {
                             }
 
                             String typeofLeft = Typeof(parsedAstObject.left);
-                            String typeofRight = Typeof(parsedAstObject.right); 
-                            
+                            String typeofRight = Typeof(parsedAstObject.right);
                             // will clean up later
                             switch (child.operator) {
                                 case '+':
@@ -615,7 +606,7 @@ class Transpiler {
 
 class vscript {
 
-    public static void main(String[] args) { 
+    public static void main(String[] args) {
         ReadFile read = new ReadFile();
         GenerateAstTree AST = new GenerateAstTree();
         AstObject tree = new AstObject();
