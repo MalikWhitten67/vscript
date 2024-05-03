@@ -16,12 +16,15 @@ Beginner dev?
     - Loops
     - Lookaheads
     - ArrayLists
+    - Type checking / string parsing
 
 
 # TODO LOG
 -  Improve printing values , currently we cannot add more than one operator assignment;
 -  Allow function calls  / working out a scope system
 -  Refacotoring - organizing different parts of the lexer / some optimizations
+-  Fixed improper math calculation
+-  Allowed being able to print a variable by name but also use left to right operator assignments for calculations!
 # Changelog
 
 1. 5/2/24 
