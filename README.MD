@@ -22,9 +22,7 @@ Beginner dev?
 # TODO LOG
 -  Improve printing values , currently we cannot add more than one operator assignment;
 -  Allow function calls  / working out a scope system
--  Refactoring - organizing different parts of the lexer / some optimizations
--  Fixed improper math calculation
--  Allowed being able to print a variable by name but also use left to right operator assignments for calculations!
+-  Refactoring - organizing different parts of the lexer / some optimizations  
 # Changelog
 
 1. 5/2/24 
