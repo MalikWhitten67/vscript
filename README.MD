@@ -34,3 +34,11 @@ Beginner dev?
 -  Allowed being able to print a variable by name but also use left to right operator assignments for calculations!
 -  Fixed improper math calculation
  
+
+# Road Map
+1. Scoped (Global|Private) - this is a must have currently int can be called within any scope - it would be effective if variables are bound to the parent container and cannot be accessed outside of it! 
+2. Functions
+ - Being able to invoke functions within itself but also outside 
+3. If Statements - the embodiment of any logic 
+4. Switch cases - performantttt
+5. Rewrite a subset in c++ 
