@@ -432,6 +432,74 @@ class Transpiler {
         return type;
     }
 
+    private String ParseOperandAsInteger(ArrayList<String> opperands, AstObject node){  
+        int fullvalue = 0; 
+        if (opperands.size() > 0) { 
+            int lastvalue = 0; 
+            String operator = ""; 
+            ArrayList<String> results = new ArrayList<>(); // Store results of each group
+
+            String ss = "";
+            for (int i = 0; i < opperands.size(); i++) {
+                String item = opperands.get(i);
+
+                if (isOperator(item)) {
+                    operator = item;
+                    if (!ss.isEmpty()) {
+                        results.add(ss);
+                        ss = "";
+                    }
+                } else {
+                    ss += item;
+                }
+                if (i ==  opperands.size() - 1
+                        || isOperator(opperands.get(i + 1))) {
+                    results.add(ss);
+                    ss = "";
+                }
+            }
+            int current = 1;
+
+            for (int i = 0; i < results.size(); i++) {
+                String value = String.valueOf(results.toArray()[i]);
+                for (AstObject childAstObject : node.children) {
+                    if (childAstObject.isVariable && childAstObject.Variable_Name.equals(value)) {
+                        value = childAstObject.value;
+                    }
+                }
+                int parsed = Integer.parseInt(value);
+
+                switch (operator) {
+                    case "*":
+                        current *= parsed;
+                        lastvalue = parsed;
+                        break;
+                    case "/":
+                        if (i == 0) {
+                            current = parsed;
+                        } else {
+                            if (parsed != 0) {
+                                current /= Math.abs(parsed);
+                            } else {
+                                break;
+                            }
+                        }
+                        break;
+                    case "-":
+                        current -= parsed;
+                        break;
+                    case "+":
+                        current += parsed;
+                    default:
+                        break;
+                }
+            }
+            fullvalue = current;
+             
+        } 
+        return  String.valueOf(Math.abs(fullvalue));
+    }
+
     /**
      * @description - Transpile an ast tree down to java spec
      * @param node
@@ -458,138 +526,17 @@ class Transpiler {
                                     + "Line error -> " + c.fullvalue);
                     System.exit(0);
                 }
-                if (parsedAstObject.opperands.size() > 0) {
-                    int fullvalue = 0; 
-                    int lastvalue = 0; 
-                    String operator = ""; 
-                    ArrayList<String> results = new ArrayList<>(); // Store results of each group
-
-                    String ss = "";
-                    for (int i = 0; i < parsedAstObject.opperands.size(); i++) {
-                        String item = parsedAstObject.opperands.get(i);
-
-                        if (isOperator(item)) {
-                            operator = item;
-                            if (!ss.isEmpty()) {
-                                results.add(ss);
-                                ss = "";
-                            }
-                        } else {
-                            ss += item;
-                        }
-                        if (i == parsedAstObject.opperands.size() - 1
-                                || isOperator(parsedAstObject.opperands.get(i + 1))) {
-                            results.add(ss);
-                            ss = "";
-                        }
-                    }
-                    int current = 1;
-
-                    for (int i = 0; i < results.size(); i++) {
-                        String value = String.valueOf(results.toArray()[i]);
-                        for (AstObject childAstObject : node.children) {
-                            if (childAstObject.isVariable && childAstObject.Variable_Name.equals(value)) {
-                                value = childAstObject.value;
-                            }
-                        }
-                        int parsed = Integer.parseInt(value);
-
-                        switch (operator) {
-                            case "*":
-                                current *= parsed;
-                                lastvalue = parsed;
-                                break;
-                            case "/":
-                                if (i == 0) {
-                                    current = parsed;
-                                } else {
-                                    if (parsed != 0) {
-                                        current /= Math.abs(parsed);
-                                    } else {
-                                        break;
-                                    }
-                                }
-                                break;
-                            case "-":
-                                current -= parsed;
-                                break;
-                            case "+":
-                                current += parsed;
-                            default:
-                                break;
-                        }
-                    }
-                    c.value = String.valueOf(Math.abs(current));
-
+                if (parsedAstObject.opperands.size() > 0) { 
+                    c.value = ParseOperandAsInteger(parsedAstObject.opperands, node); 
                 } else {
                     c.value = String.valueOf(Integer.parseInt(c.value));
                 }
             } else if (c.type == "print_statement") {
 
                 if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")) {
-                    AstObject child = c.children.get(0);
-                    for (char kw : _keywords.op_keywords) {
-                        if (child.value.contains(String.valueOf(kw))) {
-                            GenerateAstTree g = new GenerateAstTree();
-                            AstObject parsedAstObject = g.parseOperatorStatement(child.value, c);
-                            for (AstObject _chilAstObject : c.children) {
-                                if (_chilAstObject.isVariable
-                                        && _chilAstObject.Variable_Name.equals(parsedAstObject.left)) {
-                                    parsedAstObject.left = _chilAstObject.value;
-                                } else if (_chilAstObject.isVariable && c.Variable_Name.equals(parsedAstObject.right)) {
-                                    parsedAstObject.right = _chilAstObject.value;
-                                }
-
-                            }
-
-                            String typeofLeft = Typeof(parsedAstObject.left);
-                            String typeofRight = Typeof(parsedAstObject.right);
-                            // will clean up later
-                            switch (child.operator) {
-                                case '+':
-                                    if (typeofLeft.equals("integer") && typeofRight.equals("integer")) {
-                                        System.out.println(Integer.parseInt(parsedAstObject.left)
-                                                + Integer.parseInt(parsedAstObject.right));
-                                    } else if (typeofLeft.equals("float") && typeofRight == "integer"
-                                            || typeofRight == "float" && typeofLeft == "integer") {
-                                        float left = typeofLeft == "integer" ? Integer.parseInt(parsedAstObject.left)
-                                                : Float.parseFloat(parsedAstObject.left);
-                                        float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right)
-                                                : Float.parseFloat(parsedAstObject.right);
-                                        System.out.println(left + right);
-                                    }
-                                    break;
-                                case '-':
-                                    if (typeofLeft.equals("integer") && typeofRight.equals("integer")) {
-                                        System.out.println(Integer.parseInt(parsedAstObject.left)
-                                                - Integer.parseInt(parsedAstObject.right));
-                                    } else if (typeofLeft.equals("float") && typeofRight == "integer"
-                                            || typeofRight == "float" && typeofLeft == "integer") {
-                                        float left = typeofLeft == "integer" ? Integer.parseInt(parsedAstObject.left)
-                                                : Float.parseFloat(parsedAstObject.left);
-                                        float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right)
-                                                : Float.parseFloat(parsedAstObject.right);
-                                        System.out.println(left - right);
-                                    }
-                                    break;
-                                case '*':
-                                    if (typeofLeft.equals("integer") && typeofRight.equals("integer")) {
-                                        System.out.println(Integer.parseInt(parsedAstObject.left)
-                                                * Integer.parseInt(parsedAstObject.right));
-                                    } else if (typeofLeft.equals("float") && typeofRight == "integer"
-                                            || typeofRight == "float" && typeofLeft == "integer") {
-                                        float left = typeofLeft == "integer" ? Integer.parseInt(parsedAstObject.left)
-                                                : Float.parseFloat(parsedAstObject.left);
-                                        float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right)
-                                                : Float.parseFloat(parsedAstObject.right);
-                                        System.out.println(left * right);
-                                    }
-
-                                default:
-                                    break;
-                            }
-
-                        }
+                    AstObject child = c.children.get(0);  
+                    if(child.type == "$op"){
+                        System.out.println(ParseOperandAsInteger(c.children.get(0).opperands, node));
                     }
                 } else {
                     for (AstObject ch : c.children) {
