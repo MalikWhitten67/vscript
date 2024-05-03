@@ -1,9 +1,7 @@
-import java.util.*;
-
+import java.util.*; 
 import ErrorHandler.Errors;
-
+import keywords.*; 
 import java.io.*;
-import keywords.*;
 
 class ReadFile {
     public String open(String file) {
@@ -23,6 +21,9 @@ class ReadFile {
         } catch (FileNotFoundException e) {
             throw new Error("File not found: " + e.getMessage()); // Properly handle FileNotFoundException
         }
+    }
+    public static void main(String[] args) {
+        
     }
 }
 
@@ -84,9 +85,10 @@ class AstObject {
     ArrayList<AstObject> children = new ArrayList<>();
 }
 
-class OperatorAssignmentNode {
-    String value;
-    String operator;
+class OperatorAssignmentNode { 
+    ArrayList<String> indexs = new ArrayList<>();
+    ArrayList<String> operators = new ArrayList<>();
+    ArrayList<OperatorNode> lefts_rights = new ArrayList<>();
 }
 /**
  * @decription - Ast Node used to hold Operator declarations
@@ -331,6 +333,7 @@ class GenerateAstTree {
         char op = '+'; // Default operator
         int operatorIndex = -1; // Default index
         StringBuilder left = new StringBuilder();
+        OperatorAssignmentNode node2 = new OperatorAssignmentNode();
         /**
          * @todo  5/3/24
          * @manage - Possibly make it possible to add multiple operators
@@ -340,10 +343,11 @@ class GenerateAstTree {
            String i = "";
            i+= key.op_keywords[kk];
            
-           if(statement.contains(i)){
+           if(statement.contains(i)){ 
+              node2.indexs.add(kk - 2,i);
               hasOperator = true;
            }
-        } 
+        }  
         if(!hasOperator){
             node.value = statement;
             return node;
@@ -355,18 +359,39 @@ class GenerateAstTree {
                 if (current == key.op_keywords[kk]) {
                     op = key.op_keywords[kk];
                     operatorIndex = i; // Update the operator index
-                    i++;
-                    break; // Exit the inner loop once operator is found
+                    i++; 
+                    continue;
                 }else{
                     continue;
                 }
-            }
-            if (current == op) {
-                break;
-            }
+            } 
             left.append(current);
 
-        } 
+        }  
+        node2.indexs.forEach((i)->{ 
+            for (int jj = 0; jj < statement.length(); jj++) {
+                char current = statement.charAt(jj);
+                int shouldSkip = 0;
+                ArrayList<String> Indices = new ArrayList<>();
+                for (int kk = 0; kk < key.op_keywords.length; kk++) {
+                    if (current == key.op_keywords[kk]) {  
+                        shouldSkip = 1;  
+                        break;
+                    } else{
+                        shouldSkip = 0;
+                    }
+                }  
+
+                if(shouldSkip == 1){  
+                    Indices.add(jj -2, String.valueOf(current));
+                    continue;
+                }
+                
+                System.out.println(current);
+                OperatorNode nOperatorNode = new OperatorNode(); 
+    
+            }  
+        });
         StringBuilder right = new StringBuilder();
         for (int i = statement.indexOf(op) + 1; i < statement.length(); i++) {
             char current = statement.charAt(i);
@@ -437,9 +462,8 @@ class Transpiler {
         node.children.forEach((c) -> {
             if (c.name == "int32_variable") {
                 GenerateAstTree g = new GenerateAstTree();
-                AstObject parsedAstObject = g.parseOperatorStatement(c.value, c);
-                keyword keywords = new keyword();
-                for (String k : keywords.system_keywords) {
+                AstObject parsedAstObject = g.parseOperatorStatement(c.value, c); 
+                for (String k : _keywords.system_keywords) {
                     if (c.value.contains(k)) {
                         int index = code.indexOf(c.fullvalue);
                         System.out.print(err.variable_contains_keywords + " \n \tat: " + filename + ":" + index + "\n"
@@ -521,7 +545,7 @@ class Transpiler {
                             
                             String typeofLeft = Typeof(parsedAstObject.left);
                             String typeofRight = Typeof(parsedAstObject.right); 
-                            
+                            System.out.println(typeofLeft);
                             // will clean up later
                             switch (child.operator) {
                                 case '+':  
@@ -572,7 +596,7 @@ class Transpiler {
 
 class vscript {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) { 
         ReadFile read = new ReadFile();
         GenerateAstTree AST = new GenerateAstTree();
         AstObject tree = new AstObject();
