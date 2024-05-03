@@ -6,6 +6,15 @@ import ErrorHandler.Errors;
 import keywords.*;
 import java.io.*;
 
+class StringMethods{
+    public Boolean isString(String value1) {
+        if (value1.startsWith("\"") && value1.endsWith("\"") || value1.startsWith("'") && value1.endsWith("'")) {
+            return true;
+        } else if (value1.contains("'") || value1.contains("\""))
+            return true;
+        return false;
+    }
+}
 class ReadFile {
     public String open(String file) {
         try {
@@ -189,7 +198,8 @@ class GenerateAstTree {
                     ;
                 }
                 if (hasOperator) {
-                    _print_statement.children.add(parseOperatorStatement(_print_body, tree));
+                    Boolean isstring = new StringMethods().isString(_print_body); 
+                    _print_statement.children.add(parseOperatorStatement(_print_body, tree, isstring));
                 }
                 for (AstObject child : tree.children) {
                     if (child.isVariable && _print_body.contains(child.Variable_Name)) {
@@ -302,7 +312,7 @@ class GenerateAstTree {
                             }
 
                             String returnStatement = returnExpression.toString().trim();
-                            AstObject node = parseOperatorStatement(returnStatement, tree);
+                            AstObject node = parseOperatorStatement(returnStatement, tree, new StringMethods().isString(returnStatement));
                             functionAstObject.params.forEach((p) -> {
                                 if (node.left.equals(p.name) || node.right.equals(p.name)) {
                                     node.function = functionAstObject;
@@ -331,7 +341,7 @@ class GenerateAstTree {
         }
     }
 
-    public AstObject parseOperatorStatement(String statement, AstObject tree) {
+    public AstObject parseOperatorStatement(String statement, AstObject tree, Boolean include_whitespaces) {
         keyword key = new keyword();
         AstObject node = new AstObject();
         node.name = "operator_statement";
@@ -366,7 +376,7 @@ class GenerateAstTree {
                     shouldSkip = 0;
                 }
             }
-            if (Character.isWhitespace(current))
+            if (!include_whitespaces && Character.isWhitespace(current))
                 continue;
             Stack.add(String.valueOf(current));
 
@@ -384,13 +394,7 @@ class GenerateAstTree {
  */
 
 class Transpiler {
-    public Boolean isString(String value1) {
-        if (value1.startsWith("\"") && value1.endsWith("\"") || value1.startsWith("'") && value1.endsWith("'")) {
-            return true;
-        } else if (value1.contains("'") || value1.contains("\""))
-            return true;
-        return false;
-    }
+     
 
     public boolean isOperator(String item) {
         keyword keys = new keyword();
@@ -523,7 +527,14 @@ class Transpiler {
         } 
         return  String.valueOf(Math.abs(fullvalue));
     }
-    private String ParseOperandAsString(ArrayList<String> opperands, AstObject node){  
+    /**
+     * @description - Allows you to parse an  asignment arraylist to a value
+     * @param opperands
+     * @param node
+     * @param include_white_spaces
+     * @return
+     */
+    private String ParseOperandAsString(ArrayList<String> opperands, AstObject node, Boolean include_white_spaces){  
         String fullvalue =  ""; 
         if (opperands.size() > 0) { 
             int lastvalue = 0; 
@@ -534,12 +545,10 @@ class Transpiler {
             for (int i = 0; i < opperands.size(); i++) {
                 String item = opperands.get(i); 
                 if (isOperator(item)) {
-                    operator = item;
-                    if (!ss.isEmpty()) {
-                        results.add(ss);
-                        ss = "";
-                    }
-                } else {
+                    operator = item; 
+                    results.add(ss);
+                    ss = "";
+                } else if(!item.isEmpty()){ 
                     ss += item;
                 }
                 if (i ==  opperands.size() - 1
@@ -553,7 +562,7 @@ class Transpiler {
             for (int i = 0; i < results.size(); i++) {
                 String value = String.valueOf(results.toArray()[i]);
                 for (AstObject childAstObject : node.children) {
-                    if (childAstObject.isVariable && childAstObject.Variable_Name.equals(value)) {
+                    if (childAstObject.isVariable && childAstObject.Variable_Name.equals(value.trim())) {
                         value = childAstObject.value;
                     }
                 } 
@@ -567,7 +576,7 @@ class Transpiler {
                     case "-": 
                         break;
                     case "+":
-                        current += " " + value;
+                        current += "" + value;
                     case "%":
                      
                     case ">":  
@@ -582,6 +591,9 @@ class Transpiler {
              
         } 
         fullvalue = fullvalue.replaceAll("\"", "").replaceAll("'", "").trim();
+        if(fullvalue.contains("\\n")){
+            fullvalue = fullvalue.replace("\\n", "\n");
+        }
         return fullvalue;
     }
 
@@ -594,9 +606,8 @@ class Transpiler {
         Errors err = new Errors();
         node.children.forEach((c) -> {
             if (c.name == "int32_variable") {
-                GenerateAstTree g = new GenerateAstTree();
-                if(!isString(filename)){}
-                AstObject parsedAstObjectInteger = g.parseOperatorStatement(c.value, c);
+                GenerateAstTree g = new GenerateAstTree(); 
+                AstObject parsedAstObjectInteger = g.parseOperatorStatement(c.value, c, false);
                 for (String k : _keywords.system_keywords) {
                     if (c.value.contains(k)) {
                         int index = code.indexOf(c.fullvalue);
@@ -605,16 +616,16 @@ class Transpiler {
                         System.exit(0);
                     }
                 }
-                if (isString(c.value)) {
+                if (new StringMethods().isString(c.value)) {
                     int index = code.indexOf(c.fullvalue);
                     System.out.print(
                             err.variable_is_integer_but_contains_string + " \n \tat: " + filename + ":" + index + "\n"
                                     + "Line error -> " + c.fullvalue);
                     System.exit(0);
                 }
-                if (parsedAstObjectInteger.opperands.size() > 0 && !isString(c.value)) { 
+                if (parsedAstObjectInteger.opperands.size() > 0 && !new StringMethods().isString(c.value)) { 
                     c.value = ParseOperandAsInteger(parsedAstObjectInteger.opperands, node); 
-                } else if(!isString(c.value)){
+                } else if(!new StringMethods().isString(c.value)){
                     c.value = String.valueOf(Integer.parseInt(c.value));
                 }else{
                     System.out.println(c.value);
@@ -623,10 +634,10 @@ class Transpiler {
 
                 if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")) {
                     AstObject child = c.children.get(0);  
-                    if(child.type == "$op" && !isString(c.value)){
+                    if(child.type == "$op" && !new StringMethods().isString(c.value)){
                         System.out.println(ParseOperandAsInteger(c.children.get(0).opperands, node));
                     }else{
-                        System.out.println(ParseOperandAsString(c.children.get(0).opperands, node));
+                        System.out.println(ParseOperandAsString(c.children.get(0).opperands, node, true));
                     }
                 } else {
                     for (AstObject ch : c.children) {
