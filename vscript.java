@@ -175,19 +175,24 @@ class GenerateAstTree {
                 _int.value = _int.value.trim();
                 tree.children.add(_int);
 
-            } else if (data.substring(i, Math.min(i + 5, data.length())).equals("print")) {
-                i += 5;
+            } else if (data.substring(i, Math.min(i + 5, data.length())).equals("print")) {   
                 keyword keys = new keyword();
-                AstObject _print_statement = new AstObject();
+                AstObject _print_statement = new AstObject(); 
+                _print_statement.fullvalue += data.substring(i, Math.min(i + 5, data.length())); 
+                i += 5;
                 _print_statement.type = "print_statement";
                 _print_statement.name = "print";
                 String _print_body = "";
                 if (data.charAt(i) == '(')
+                    _print_statement.fullvalue += data.charAt(i);
                     i++;
                 while (i < data.length() && data.charAt(i) != ')') {
-                    _print_body += data.charAt(i);
+                    _print_body += data.charAt(i); 
+                    _print_statement.fullvalue += data.charAt(i);
+                    
                     i++;
-                }
+                } 
+                _print_statement.fullvalue += data.charAt(i);
                 Boolean hasOperator = false;
                 for (char k : keys.op_keywords) {
                     StringBuilder str = new StringBuilder();
@@ -611,17 +616,12 @@ class Transpiler {
                 for (String k : _keywords.system_keywords) {
                     if (c.value.contains(k)) {
                         int index = code.indexOf(c.fullvalue);
-                        System.out.print(err.variable_contains_keywords + " \n \tat: " + filename + ":" + index + "\n"
-                                + "Line error -> " + c.fullvalue);
-                        System.exit(0);
+                        err.handler(err.variable_contains_keywords, filename, index, filename, true); 
                     }
                 }
                 if (new StringMethods().isString(c.value)) {
                     int index = code.indexOf(c.fullvalue);
-                    System.out.print(
-                            err.variable_is_integer_but_contains_string + " \n \tat: " + filename + ":" + index + "\n"
-                                    + "Line error -> " + c.fullvalue);
-                    System.exit(0);
+                    err.handler(err.variable_is_integer_but_contains_string, filename, index, filename, true); 
                 }
                 if (parsedAstObjectInteger.opperands.size() > 0 && !new StringMethods().isString(c.value)) { 
                     c.value = ParseOperandAsInteger(parsedAstObjectInteger.opperands, node); 
@@ -629,7 +629,7 @@ class Transpiler {
                     for(AstObject ch : node.children){
                          if(ch.Variable_Name.equals(c.value)){ 
                             c.value = ch.value;
-                         }
+                         } 
                     }
                     c.value = String.valueOf(Integer.parseInt(c.value));
                 }else{
@@ -645,11 +645,17 @@ class Transpiler {
                         System.out.println(ParseOperandAsString(c.children.get(0).opperands, node));
                     }
                 } else {
-                    for (AstObject ch : c.children) {
-                        if (ch.isVariable && c.value.equals(ch.Variable_Name)) {
-                            System.out.println(ch.value);
+                    if(c.children.size() > 0){
+                        for (AstObject ch : c.children) { 
+                            if (ch.isVariable && c.value.equals(ch.Variable_Name)) {
+                                System.out.println(ch.value);
+                            }
+                             
                         }
+                    }else{ 
+                        err.handler(err.printing_null_value, filename, code.indexOf(c.fullvalue), c.fullvalue, true);
                     }
+                     
                 }
 
             }
