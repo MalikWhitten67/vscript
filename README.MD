@@ -11,10 +11,11 @@ Beginner dev?
 
 1. What will i gain reading through the code?
  - You will be able to understand how lexers work - proper usage of Abstract Syntax Tree's (AST);
- - You will be able to understand string manipulation 
+ - You will be able to understand 
+    - string manipulation 
     - Arrays
     - Loops
-    - Lookaheads
+    - Common lexing lookaheads char indexing;
     - ArrayLists
     - Type checking / string parsing
 
@@ -22,13 +23,13 @@ Beginner dev?
 # TODO LOG
 -  Improve printing values , currently we cannot add more than one operator assignment;
 -  Allow function calls  / working out a scope system
--  Refacotoring - organizing different parts of the lexer / some optimizations
--  Fixed improper math calculation
--  Allowed being able to print a variable by name but also use left to right operator assignments for calculations!
+-  Refacotoring - organizing different parts of the lexer / some optimizations  
 # Changelog
 
 1. 5/2/24 
  - Added print statements 
  - Parsed integer variables by their operator type;
- - Fixed issue with whitespace within left hand assignments;
+ - Fixed issue with whitespace within left hand assignments; 
+-  Allowed being able to print a variable by name but also use left to right operator assignments for calculations!
+-  Fixed improper math calculation
  

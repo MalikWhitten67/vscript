@@ -84,10 +84,18 @@ class AstObject {
     ArrayList<AstObject> children = new ArrayList<>();
 }
 
+class OperatorAssignmentNode {
+    String value;
+    String operator;
+}
+/**
+ * @decription - Ast Node used to hold Operator declarations
+ */
 class OperatorNode {
     String left = "";
     String right = "";
     AstObject function;
+    ArrayList<OperatorAssignmentNode> Assignments = new ArrayList<>();
     char operator;
 }
 
