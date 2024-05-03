@@ -327,6 +327,19 @@ class GenerateAstTree {
          * @todo  5/3/24
          * @manage - Possibly make it possible to add multiple operators
          */
+        Boolean hasOperator = false;
+        for(int kk = 0; kk < key.op_keywords.length; kk++){
+           String i = "";
+           i+= key.op_keywords[kk];
+           
+           if(statement.contains(i)){
+              hasOperator = true;
+           }
+        } 
+        if(!hasOperator){
+            node.value = statement;
+            return node;
+        }
         for (int i = 0; i < statement.length(); i++) {
             char current = statement.charAt(i);
 
@@ -336,6 +349,8 @@ class GenerateAstTree {
                     operatorIndex = i; // Update the operator index
                     i++;
                     break; // Exit the inner loop once operator is found
+                }else{
+                    continue;
                 }
             }
             if (current == op) {
@@ -343,14 +358,14 @@ class GenerateAstTree {
             }
             left.append(current);
 
-        }
+        } 
         StringBuilder right = new StringBuilder();
         for (int i = statement.indexOf(op) + 1; i < statement.length(); i++) {
             char current = statement.charAt(i);
             right.append(current);
         }
         node.right = right.toString().trim();
-        node.left = left.toString().trim();
+        node.left = left.toString().trim(); 
         // check if current left or right assignment is a variable call;
         for (AstObject c : tree.children) {
             if (c.Variable_Name.equals(node.right.trim()) || c.Variable_Name.equals(node.left.trim()))
@@ -358,6 +373,7 @@ class GenerateAstTree {
         }
         node.operator = op;
         node.value = statement;
+        
         return node;
     }
 
@@ -376,6 +392,33 @@ class Transpiler {
         return false;
     }
 
+
+    /*
+     * @description simple way to check type of string
+     */
+    public String Typeof(String value){
+        String type = "string";
+        try {
+            Float.parseFloat(value); 
+            if(value.contains(String.valueOf('.'))) type = "float";
+            else type = "integer"; 
+            return type;
+        } catch (Exception e) { 
+        } 
+        try {
+            Double.parseDouble(value);
+            type = "double";
+            return type;
+        } catch (Exception e) { 
+        }
+        try {
+            Boolean.parseBoolean(value);
+            type = "bool"; 
+            return type;
+        } catch (Exception e) { 
+        }
+        return type;
+    }
     /**
      * @description - Transpile an ast tree down to java spec
      * @param node
@@ -403,59 +446,108 @@ class Transpiler {
                                     + "Line error -> " + c.fullvalue);
                     System.exit(0);
                 }
-                for (AstObject childObject : node.children) {
-                    Boolean isString = isString(childObject.value);
-                    if (childObject.isVariable && parsedAstObject.left.trim().contains(childObject.Variable_Name.trim())
-                            && String.valueOf(parsedAstObject.operator).length() > 0) {
-                        if (isString)
-                            childObject.value = childObject.value.replaceAll("'", "").replaceAll("\"", "");
-                        for (AstObject variable : node.children) {
-                            if (variable.Variable_Name.equals(parsedAstObject.left.trim())) {
-                                parsedAstObject.left = variable.value;
+                if(String.valueOf(parsedAstObject.operator).length() > 0 ){
+                    for (AstObject childObject : node.children) {
+                        Boolean isString = isString(childObject.value);
+                        if (childObject.isVariable && parsedAstObject.left.trim().contains(childObject.Variable_Name.trim())  && String.valueOf(parsedAstObject.operator).length() > 0) { 
+                            for (AstObject variable : node.children) {
+                                if (variable.Variable_Name.equals(parsedAstObject.left.trim())) { 
+                                    parsedAstObject.left = variable.value;
+                                }
+                            } 
+                        } else if (childObject.isVariable && parsedAstObject.right.equals(childObject.Variable_Name.trim())) { 
+                            if (isString)
+                                childObject.value = childObject.value.replaceAll("'", "").replaceAll("\"", "");
+                            for (AstObject variable : node.children) {
+                                if (variable.Variable_Name.equals(parsedAstObject.right.trim())) {
+                                    parsedAstObject.right = variable.value;
+                                }
                             }
                         }
-                        System.out.println(parsedAstObject.left);
-                    } else if (childObject.isVariable && parsedAstObject.right.equals(childObject.Variable_Name.trim())
-                            && String.valueOf(parsedAstObject.operator).length() > 0) {
-                        if (isString)
-                            childObject.value = childObject.value.replaceAll("'", "").replaceAll("\"", "");
-                        for (AstObject variable : node.children) {
-                            if (variable.Variable_Name.equals(parsedAstObject.right.trim())) {
-                                parsedAstObject.right = variable.value;
-                            }
-                        }
+    
+                    }  
+                    if (String.valueOf(parsedAstObject.operator).trim().length() > 0) { 
+                        switch (parsedAstObject.operator) {
+                            case '+':
+                                c.value = String.valueOf(
+                                        Integer.parseInt(parsedAstObject.left) + Integer.parseInt(parsedAstObject.right)); 
+                                break;
+                            case '-':
+                                c.value = String.valueOf(
+                                        Integer.parseInt(parsedAstObject.left) - Integer.parseInt(parsedAstObject.right));
+                                break;
+                            case '*':
+                                c.value = String.valueOf(
+                                        Integer.parseInt(parsedAstObject.left) * Integer.parseInt(parsedAstObject.right));
+                                break;
+                            case '/':    
+                            c.value = String.valueOf(Integer.parseInt(parsedAstObject.left) / Integer.parseInt(parsedAstObject.right)); 
+                                break;
+                            case '%':
+                             c.value = String.valueOf(Math.floor(Integer.parseInt(parsedAstObject.left) * Integer.parseInt(parsedAstObject.right) / 100));  
+                            default:
+                                break;
+                        }  
+                    }else{ 
+                        c.value = String.valueOf(Integer.parseInt(c.value));
                     }
-
-                }
-                if (String.valueOf(parsedAstObject.operator).length() > 0) {
-                    switch (parsedAstObject.operator) {
-                        case '+':
-                            c.value = String.valueOf(
-                                    Integer.parseInt(parsedAstObject.left) + Integer.parseInt(parsedAstObject.right));
-                            break;
-                        case '-':
-                            c.value = String.valueOf(
-                                    Integer.parseInt(parsedAstObject.left) - Integer.parseInt(parsedAstObject.right));
-                            break;
-                        case '*':
-                            c.value = String.valueOf(
-                                    Integer.parseInt(parsedAstObject.left) * Integer.parseInt(parsedAstObject.right));
-                            break;
-                        case '/':
-                            c.value = String.valueOf(
-                                    Integer.parseInt(parsedAstObject.left) / Integer.parseInt(parsedAstObject.right));
-                            break;
-                        default:
-                            break;
-                    }
+                }else{ 
                 }
             } else if (c.type == "print_statement") {
-
+ 
                 if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")) {
-                    AstObject child = c.children.get(0);
-                    for (char kw : _keywords.op_keywords) {
-                        // 5/3/24
-                        // reimplement operator printing;
+                    AstObject child = c.children.get(0); 
+                    for (char kw : _keywords.op_keywords) { 
+                        if(child.value.contains(String.valueOf(kw))){
+                            GenerateAstTree g = new GenerateAstTree();
+                            AstObject parsedAstObject = g.parseOperatorStatement(child.value, c);  
+                            for(AstObject _chilAstObject : c.children){ 
+                                if(_chilAstObject.isVariable && _chilAstObject.Variable_Name.equals(parsedAstObject.left)){    
+                                    parsedAstObject.left = _chilAstObject.value;
+                                }else if (_chilAstObject.isVariable && c.Variable_Name.equals(parsedAstObject.right)){ 
+                                    parsedAstObject.right = _chilAstObject.value;
+                                } 
+
+                                
+                            }   
+                            
+                            String typeofLeft = Typeof(parsedAstObject.left);
+                            String typeofRight = Typeof(parsedAstObject.right); 
+                            
+                            // will clean up later
+                            switch (child.operator) {
+                                case '+':  
+                                    if(typeofLeft.equals("integer") && typeofRight.equals("integer")){
+                                        System.out.println(Integer.parseInt(parsedAstObject.left) + Integer.parseInt(parsedAstObject.right));
+                                    }else if(typeofLeft.equals("float") && typeofRight == "integer" || typeofRight == "float" && typeofLeft == "integer"){
+                                        float left = typeofLeft == "integer"  ? Integer.parseInt(parsedAstObject.left) : Float.parseFloat(parsedAstObject.left);
+                                        float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right) : Float.parseFloat(parsedAstObject.right);
+                                        System.out.println(left + right);
+                                    }
+                                    break;
+                                case '-':
+                                    if(typeofLeft.equals("integer") && typeofRight.equals("integer")){
+                                        System.out.println(Integer.parseInt(parsedAstObject.left) - Integer.parseInt(parsedAstObject.right));
+                                    }else if(typeofLeft.equals("float") && typeofRight == "integer" || typeofRight == "float" && typeofLeft == "integer"){
+                                        float left = typeofLeft == "integer"  ? Integer.parseInt(parsedAstObject.left) : Float.parseFloat(parsedAstObject.left);
+                                        float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right) : Float.parseFloat(parsedAstObject.right);
+                                        System.out.println(left - right);
+                                    }
+                                    break;
+                                case '*':
+                                if(typeofLeft.equals("integer") && typeofRight.equals("integer")){
+                                    System.out.println(Integer.parseInt(parsedAstObject.left) * Integer.parseInt(parsedAstObject.right));
+                                }else if(typeofLeft.equals("float") && typeofRight == "integer" || typeofRight == "float" && typeofLeft == "integer"){
+                                    float left = typeofLeft == "integer"  ? Integer.parseInt(parsedAstObject.left) : Float.parseFloat(parsedAstObject.left);
+                                    float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right) : Float.parseFloat(parsedAstObject.right);
+                                    System.out.println(left * right);
+                                }
+
+                                default:
+                                    break;
+                            }
+                            
+                        }
                     }
                 } else {
                     for (AstObject ch : c.children) {
