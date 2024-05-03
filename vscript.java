@@ -1,9 +1,10 @@
 import java.util.*;
 
-import ErrorHandler.Errors;
+import javax.print.DocFlavor.STRING;
 
-import java.io.*;
+import ErrorHandler.Errors;
 import keywords.*;
+import java.io.*;
 
 class ReadFile {
     public String open(String file) {
@@ -23,6 +24,10 @@ class ReadFile {
         } catch (FileNotFoundException e) {
             throw new Error("File not found: " + e.getMessage()); // Properly handle FileNotFoundException
         }
+    }
+
+    public static void main(String[] args) {
+
     }
 }
 
@@ -49,6 +54,7 @@ class AstObject {
     String right = "";
     AstObject function;
     char operator;
+    ArrayList<String> opperands = new ArrayList<>();
     String name = "";
     String Variable_Name = "";
     String return_type = "";
@@ -85,9 +91,11 @@ class AstObject {
 }
 
 class OperatorAssignmentNode {
-    String value;
-    String operator;
+    ArrayList<String> indexs = new ArrayList<>();
+    ArrayList<String> operators = new ArrayList<>();
+    ArrayList<OperatorNode> lefts_rights = new ArrayList<>();
 }
+
 /**
  * @decription - Ast Node used to hold Operator declarations
  */
@@ -331,57 +339,41 @@ class GenerateAstTree {
         char op = '+'; // Default operator
         int operatorIndex = -1; // Default index
         StringBuilder left = new StringBuilder();
-        /**
-         * @todo  5/3/24
-         * @manage - Possibly make it possible to add multiple operators
-         */
+        ArrayList<String> indexs = new ArrayList<>(Collections.nCopies(statement.length(), null));
         Boolean hasOperator = false;
-        for(int kk = 0; kk < key.op_keywords.length; kk++){
-           String i = "";
-           i+= key.op_keywords[kk];
-           
-           if(statement.contains(i)){
-              hasOperator = true;
-           }
-        } 
-        if(!hasOperator){
+        for (int kk = 0; kk < key.op_keywords.length; kk++) {
+            String i = "";
+            i += key.op_keywords[kk];
+
+            if (statement.contains(i)) {
+                indexs.set(kk, i);
+                hasOperator = true;
+            }
+        }
+        if (!hasOperator) {
             node.value = statement;
             return node;
         }
-        for (int i = 0; i < statement.length(); i++) {
-            char current = statement.charAt(i);
-
+        ArrayList<String> Stack = new ArrayList<>();
+        for (int jj = 0; jj < statement.length(); jj++) {
+            char current = statement.charAt(jj);
+            int shouldSkip = 0;
             for (int kk = 0; kk < key.op_keywords.length; kk++) {
                 if (current == key.op_keywords[kk]) {
-                    op = key.op_keywords[kk];
-                    operatorIndex = i; // Update the operator index
-                    i++;
-                    break; // Exit the inner loop once operator is found
-                }else{
-                    continue;
+                    shouldSkip = 1;
+                    break;
+                } else {
+                    shouldSkip = 0;
                 }
             }
-            if (current == op) {
-                break;
-            }
-            left.append(current);
+            if (Character.isWhitespace(current))
+                continue;
+            Stack.add(String.valueOf(current));
 
-        } 
-        StringBuilder right = new StringBuilder();
-        for (int i = statement.indexOf(op) + 1; i < statement.length(); i++) {
-            char current = statement.charAt(i);
-            right.append(current);
         }
-        node.right = right.toString().trim();
-        node.left = left.toString().trim(); 
-        // check if current left or right assignment is a variable call;
-        for (AstObject c : tree.children) {
-            if (c.Variable_Name.equals(node.right.trim()) || c.Variable_Name.equals(node.left.trim()))
-                node.isVariable = true;
-        }
-        node.operator = op;
+        node.opperands = Stack;
         node.value = statement;
-        
+
         return node;
     }
 
@@ -400,33 +392,46 @@ class Transpiler {
         return false;
     }
 
+    public boolean isOperator(String item) {
+        keyword keys = new keyword();
+        Boolean isoperator = false;
+        for (char kw : keys.op_keywords) {
+            if (String.valueOf(kw).equals(item)) {
+                isoperator = true;
+            }
+        }
+        return isoperator;
+    }
 
     /*
      * @description simple way to check type of string
      */
-    public String Typeof(String value){
+    public String Typeof(String value) {
         String type = "string";
         try {
-            Float.parseFloat(value); 
-            if(value.contains(String.valueOf('.'))) type = "float";
-            else type = "integer"; 
+            Float.parseFloat(value);
+            if (value.contains(String.valueOf('.')))
+                type = "float";
+            else
+                type = "integer";
             return type;
-        } catch (Exception e) { 
-        } 
+        } catch (Exception e) {
+        }
         try {
             Double.parseDouble(value);
             type = "double";
             return type;
-        } catch (Exception e) { 
+        } catch (Exception e) {
         }
         try {
             Boolean.parseBoolean(value);
-            type = "bool"; 
+            type = "bool";
             return type;
-        } catch (Exception e) { 
+        } catch (Exception e) {
         }
         return type;
     }
+
     /**
      * @description - Transpile an ast tree down to java spec
      * @param node
@@ -438,8 +443,7 @@ class Transpiler {
             if (c.name == "int32_variable") {
                 GenerateAstTree g = new GenerateAstTree();
                 AstObject parsedAstObject = g.parseOperatorStatement(c.value, c);
-                keyword keywords = new keyword();
-                for (String k : keywords.system_keywords) {
+                for (String k : _keywords.system_keywords) {
                     if (c.value.contains(k)) {
                         int index = code.indexOf(c.fullvalue);
                         System.out.print(err.variable_contains_keywords + " \n \tat: " + filename + ":" + index + "\n"
@@ -454,107 +458,133 @@ class Transpiler {
                                     + "Line error -> " + c.fullvalue);
                     System.exit(0);
                 }
-                if(String.valueOf(parsedAstObject.operator).length() > 0 ){
-                    for (AstObject childObject : node.children) {
-                        Boolean isString = isString(childObject.value);
-                        if (childObject.isVariable && parsedAstObject.left.trim().contains(childObject.Variable_Name.trim())  && String.valueOf(parsedAstObject.operator).length() > 0) { 
-                            for (AstObject variable : node.children) {
-                                if (variable.Variable_Name.equals(parsedAstObject.left.trim())) { 
-                                    parsedAstObject.left = variable.value;
-                                }
-                            } 
-                        } else if (childObject.isVariable && parsedAstObject.right.equals(childObject.Variable_Name.trim())) { 
-                            if (isString)
-                                childObject.value = childObject.value.replaceAll("'", "").replaceAll("\"", "");
-                            for (AstObject variable : node.children) {
-                                if (variable.Variable_Name.equals(parsedAstObject.right.trim())) {
-                                    parsedAstObject.right = variable.value;
-                                }
+                if (parsedAstObject.opperands.size() > 0) { 
+                    String operator = ""; 
+                    ArrayList<String> results = new ArrayList<>();  
+                    String ss = "";
+                    for (int i = 0; i < parsedAstObject.opperands.size(); i++) {
+                        String item = parsedAstObject.opperands.get(i);
+
+                        if (isOperator(item)) {
+                            operator = item;
+                            if (!ss.isEmpty()) {
+                                results.add(ss);
+                                ss = "";
+                            }
+                        } else {
+                            ss += item;
+                        }
+                        if (i == parsedAstObject.opperands.size() - 1
+                                || isOperator(parsedAstObject.opperands.get(i + 1))) {
+                            results.add(ss);
+                            ss = "";
+                        }
+                    }
+                    int current = 1;
+
+                    for (int i = 0; i < results.size(); i++) {
+                        String value = String.valueOf(results.toArray()[i]);
+                        for (AstObject childAstObject : node.children) {
+                            if (childAstObject.isVariable && childAstObject.Variable_Name.equals(value)) {
+                                value = childAstObject.value;
                             }
                         }
-    
-                    }  
-                    if (String.valueOf(parsedAstObject.operator).trim().length() > 0) { 
-                        switch (parsedAstObject.operator) {
-                            case '+':
-                                c.value = String.valueOf(
-                                        Integer.parseInt(parsedAstObject.left) + Integer.parseInt(parsedAstObject.right)); 
+                        int parsed = Integer.parseInt(value);
+
+                        switch (operator) {
+                            case "*":
+                                current *= parsed; 
                                 break;
-                            case '-':
-                                c.value = String.valueOf(
-                                        Integer.parseInt(parsedAstObject.left) - Integer.parseInt(parsedAstObject.right));
+                            case "/":
+                                if (i == 0) {
+                                    current = parsed;
+                                } else {
+                                    if (parsed != 0) {
+                                        current /= Math.abs(parsed);
+                                    } else {
+                                        break;
+                                    }
+                                }
                                 break;
-                            case '*':
-                                c.value = String.valueOf(
-                                        Integer.parseInt(parsedAstObject.left) * Integer.parseInt(parsedAstObject.right));
+                            case "-":
+                                current -= parsed;
                                 break;
-                            case '/':    
-                            c.value = String.valueOf(Integer.parseInt(parsedAstObject.left) / Integer.parseInt(parsedAstObject.right)); 
-                                break;
-                            case '%':
-                             c.value = String.valueOf(Math.floor(Integer.parseInt(parsedAstObject.left) * Integer.parseInt(parsedAstObject.right) / 100));  
+                            case "+":
+                                current += parsed;
                             default:
                                 break;
-                        }  
-                    }else{ 
-                        c.value = String.valueOf(Integer.parseInt(c.value));
+                        }
                     }
-                }else{ 
+                    c.value = String.valueOf(Math.abs(current));
+
+                } else {
+                    c.value = String.valueOf(Integer.parseInt(c.value));
                 }
             } else if (c.type == "print_statement") {
- 
-                if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")) {
-                    AstObject child = c.children.get(0); 
-                    for (char kw : _keywords.op_keywords) { 
-                        if(child.value.contains(String.valueOf(kw))){
-                            GenerateAstTree g = new GenerateAstTree();
-                            AstObject parsedAstObject = g.parseOperatorStatement(child.value, c);  
-                            for(AstObject _chilAstObject : c.children){ 
-                                if(_chilAstObject.isVariable && _chilAstObject.Variable_Name.equals(parsedAstObject.left)){    
-                                    parsedAstObject.left = _chilAstObject.value;
-                                }else if (_chilAstObject.isVariable && c.Variable_Name.equals(parsedAstObject.right)){ 
-                                    parsedAstObject.right = _chilAstObject.value;
-                                } 
 
-                                
-                            }   
-                            
+                if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")) {
+                    AstObject child = c.children.get(0);
+                    for (char kw : _keywords.op_keywords) {
+                        if (child.value.contains(String.valueOf(kw))) {
+                            GenerateAstTree g = new GenerateAstTree();
+                            AstObject parsedAstObject = g.parseOperatorStatement(child.value, c);
+                            for (AstObject _chilAstObject : c.children) {
+                                if (_chilAstObject.isVariable
+                                        && _chilAstObject.Variable_Name.equals(parsedAstObject.left)) {
+                                    parsedAstObject.left = _chilAstObject.value;
+                                } else if (_chilAstObject.isVariable && c.Variable_Name.equals(parsedAstObject.right)) {
+                                    parsedAstObject.right = _chilAstObject.value;
+                                }
+
+                            }
+
                             String typeofLeft = Typeof(parsedAstObject.left);
-                            String typeofRight = Typeof(parsedAstObject.right); 
-                            
+                            String typeofRight = Typeof(parsedAstObject.right);
                             // will clean up later
                             switch (child.operator) {
-                                case '+':  
-                                    if(typeofLeft.equals("integer") && typeofRight.equals("integer")){
-                                        System.out.println(Integer.parseInt(parsedAstObject.left) + Integer.parseInt(parsedAstObject.right));
-                                    }else if(typeofLeft.equals("float") && typeofRight == "integer" || typeofRight == "float" && typeofLeft == "integer"){
-                                        float left = typeofLeft == "integer"  ? Integer.parseInt(parsedAstObject.left) : Float.parseFloat(parsedAstObject.left);
-                                        float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right) : Float.parseFloat(parsedAstObject.right);
+                                case '+':
+                                    if (typeofLeft.equals("integer") && typeofRight.equals("integer")) {
+                                        System.out.println(Integer.parseInt(parsedAstObject.left)
+                                                + Integer.parseInt(parsedAstObject.right));
+                                    } else if (typeofLeft.equals("float") && typeofRight == "integer"
+                                            || typeofRight == "float" && typeofLeft == "integer") {
+                                        float left = typeofLeft == "integer" ? Integer.parseInt(parsedAstObject.left)
+                                                : Float.parseFloat(parsedAstObject.left);
+                                        float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right)
+                                                : Float.parseFloat(parsedAstObject.right);
                                         System.out.println(left + right);
                                     }
                                     break;
                                 case '-':
-                                    if(typeofLeft.equals("integer") && typeofRight.equals("integer")){
-                                        System.out.println(Integer.parseInt(parsedAstObject.left) - Integer.parseInt(parsedAstObject.right));
-                                    }else if(typeofLeft.equals("float") && typeofRight == "integer" || typeofRight == "float" && typeofLeft == "integer"){
-                                        float left = typeofLeft == "integer"  ? Integer.parseInt(parsedAstObject.left) : Float.parseFloat(parsedAstObject.left);
-                                        float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right) : Float.parseFloat(parsedAstObject.right);
+                                    if (typeofLeft.equals("integer") && typeofRight.equals("integer")) {
+                                        System.out.println(Integer.parseInt(parsedAstObject.left)
+                                                - Integer.parseInt(parsedAstObject.right));
+                                    } else if (typeofLeft.equals("float") && typeofRight == "integer"
+                                            || typeofRight == "float" && typeofLeft == "integer") {
+                                        float left = typeofLeft == "integer" ? Integer.parseInt(parsedAstObject.left)
+                                                : Float.parseFloat(parsedAstObject.left);
+                                        float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right)
+                                                : Float.parseFloat(parsedAstObject.right);
                                         System.out.println(left - right);
                                     }
                                     break;
                                 case '*':
-                                if(typeofLeft.equals("integer") && typeofRight.equals("integer")){
-                                    System.out.println(Integer.parseInt(parsedAstObject.left) * Integer.parseInt(parsedAstObject.right));
-                                }else if(typeofLeft.equals("float") && typeofRight == "integer" || typeofRight == "float" && typeofLeft == "integer"){
-                                    float left = typeofLeft == "integer"  ? Integer.parseInt(parsedAstObject.left) : Float.parseFloat(parsedAstObject.left);
-                                    float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right) : Float.parseFloat(parsedAstObject.right);
-                                    System.out.println(left * right);
-                                }
+                                    if (typeofLeft.equals("integer") && typeofRight.equals("integer")) {
+                                        System.out.println(Integer.parseInt(parsedAstObject.left)
+                                                * Integer.parseInt(parsedAstObject.right));
+                                    } else if (typeofLeft.equals("float") && typeofRight == "integer"
+                                            || typeofRight == "float" && typeofLeft == "integer") {
+                                        float left = typeofLeft == "integer" ? Integer.parseInt(parsedAstObject.left)
+                                                : Float.parseFloat(parsedAstObject.left);
+                                        float right = typeofRight == "integer" ? Integer.parseInt(parsedAstObject.right)
+                                                : Float.parseFloat(parsedAstObject.right);
+                                        System.out.println(left * right);
+                                    }
 
                                 default:
                                     break;
                             }
-                            
+
                         }
                     }
                 } else {

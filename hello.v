@@ -1,3 +1,4 @@
-int kb = 120 * 120;
-int i = kb / 1024; 
-print(i * 20);
+int k = 10;
+int i = k * 1024 * 20 ; 
+int sum = i / 10;
+print(sum);
