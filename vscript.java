@@ -534,7 +534,7 @@ class Transpiler {
      * @param include_white_spaces
      * @return
      */
-    private String ParseOperandAsString(ArrayList<String> opperands, AstObject node, Boolean include_white_spaces){  
+    private String ParseOperandAsString(ArrayList<String> opperands, AstObject node){  
         String fullvalue =  ""; 
         if (opperands.size() > 0) { 
             int lastvalue = 0; 
@@ -626,6 +626,11 @@ class Transpiler {
                 if (parsedAstObjectInteger.opperands.size() > 0 && !new StringMethods().isString(c.value)) { 
                     c.value = ParseOperandAsInteger(parsedAstObjectInteger.opperands, node); 
                 } else if(!new StringMethods().isString(c.value)){
+                    for(AstObject ch : node.children){
+                         if(ch.Variable_Name.equals(c.value)){ 
+                            c.value = ch.value;
+                         }
+                    }
                     c.value = String.valueOf(Integer.parseInt(c.value));
                 }else{
                     System.out.println(c.value);
@@ -637,7 +642,7 @@ class Transpiler {
                     if(child.type == "$op" && !new StringMethods().isString(c.value)){
                         System.out.println(ParseOperandAsInteger(c.children.get(0).opperands, node));
                     }else{
-                        System.out.println(ParseOperandAsString(c.children.get(0).opperands, node, true));
+                        System.out.println(ParseOperandAsString(c.children.get(0).opperands, node));
                     }
                 } else {
                     for (AstObject ch : c.children) {
