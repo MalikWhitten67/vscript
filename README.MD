@@ -29,15 +29,19 @@ Beginner dev?
 
 1. 5/2/24 
  - Added print statements 
- - Parsed integer variables by their operator type;
- - Fixed issue with whitespace within left hand assignments; 
--  Allowed being able to print a variable by name but also use left to right operator assignments for calculations!
--  Fixed improper math calculation
+ - Parsed integer variables by their operator type; 
+ - Fixed issue with whitespace within left hand assignments;  
+ - Fixed improper math calculation
+
+2. 5/3/24 
+ - Better code management / error handling 
+ - Added the ability to chain operators
+ - Added ability to use \n within strings in print statements - aswell as adding two strings together
  
 
 # Road Map
 1. Scoped (Global|Private) - this is a must have currently int can be called within any scope - it would be effective if variables are bound to the parent container and cannot be accessed outside of it! 
-2. Functions
+2. Functions (CURRENTLY WORKING ON)
  - Being able to invoke functions within itself but also outside 
 3. If Statements - the embodiment of any logic 
 4. Switch cases - performantttt
