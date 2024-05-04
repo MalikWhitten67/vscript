@@ -205,11 +205,13 @@ class GenerateAstTree {
                        _print_statement.fullvalue += data.charAt(i); 
                        i++;
                 } 
-                while (i < data.length() && data.charAt(i) != ')') {
+                
+                while (i < data.length() && i != data.lastIndexOf(')')) {
                     _print_body += data.charAt(i); 
                     _print_statement.fullvalue += data.charAt(i); 
                     i++;
                 } 
+                 
                 _print_statement.fullvalue += data.charAt(i); 
                 Boolean hasOperator = false;
                 for (char k : keys.op_keywords) {
@@ -222,22 +224,20 @@ class GenerateAstTree {
                 if (hasOperator) {
                     Boolean isstring = new StringMethods().isString(_print_body); 
                     _print_statement.children.add(parseOperatorStatement(_print_body, tree, isstring));
-                }
-                for (AstObject child : tree.children) {
+                } 
+                for (AstObject child : tree.children) { 
                     if (child.isVariable && _print_body.contains(child.Variable_Name)) {
                         _print_statement.children.add(child);
                     }
                 } 
-                _print_statement.value = _print_body;
-                System.out.println(_print_body);
+                _print_statement.value = _print_body; 
                 if (!tree.children.contains(_print_statement))
                     tree.children.add(_print_statement);
 
                 i++;
             }
 
-            else if (data.substring(i, Math.min(i + 6, data.length())).equals("import")) {
-                System.out.println("yok");
+            else if (data.substring(i, Math.min(i + 6, data.length())).equals("import")) { 
                 i += 6;
                 AstObject _import = new AstObject();
                 _import.type = "es4_import";
@@ -356,8 +356,7 @@ class GenerateAstTree {
                                     }
                                 }
                                 if(!node.value.isEmpty()) _return.children.add(node);
-                            }
-                            System.out.print(returnStatement);
+                            } 
                               
                             _return.type = "return_statement";
                             _return.Scoped = true;
@@ -381,6 +380,7 @@ class GenerateAstTree {
     }
 
     public AstObject parseOperatorStatement(String statement, AstObject tree, Boolean include_whitespaces) {
+         
         keyword key = new keyword();
         AstObject node = new AstObject();
         node.name = "operator_statement";
@@ -404,22 +404,18 @@ class GenerateAstTree {
             return node;
         }
         ArrayList<String> Stack = new ArrayList<>();
+        int j = 0; 
         for (int jj = 0; jj < statement.length(); jj++) {
-            char current = statement.charAt(jj);
-            int shouldSkip = 0;
-            for (int kk = 0; kk < key.op_keywords.length; kk++) {
-                if (current == key.op_keywords[kk]) {
-                    shouldSkip = 1;
-                    break;
-                } else {
-                    shouldSkip = 0;
-                }
-            }
-            if (!include_whitespaces && Character.isWhitespace(current))
+            char current = statement.charAt(jj); 
+            if (!include_whitespaces && Character.isWhitespace(current)) {
+                
                 continue;
-            Stack.add(String.valueOf(current));
+            }
+           
+           Stack.add( String.valueOf(current));
+           
 
-        }
+        } 
         node.opperands = Stack;
         node.value = statement;
 
@@ -484,15 +480,16 @@ class Transpiler {
             ArrayList<String> results = new ArrayList<>(); // Store results of each group
  
             String ss = "";
-            for (int i = 0; i < opperands.size(); i++) {
+            for (int i = 0; i < opperands.size(); i++) { 
                 String item = opperands.get(i); 
 
-                if (isOperator(item)) {
+                if (isOperator(item)) { 
                     operator = item;
                     if (!ss.isEmpty()) {
                         results.add(ss);
-                        ss = "";
-                    }
+                        ss = ""; 
+                        continue;
+                    } 
                 } else {
                     ss += item;
                 }
@@ -502,7 +499,7 @@ class Transpiler {
                     ss = "";
                 }
             }
-            int current = 1;
+            int current = 0;
 
               
             for (int i = 0; i < results.size(); i++) {
@@ -512,28 +509,30 @@ class Transpiler {
                         value = childAstObject.value;
                     }
                 }
-                int parsed = Integer.parseInt(value); 
+                int parsed = Integer.parseInt(value);  
                 switch (operator) {
                     case "*":
-                        current *= parsed;
-                        lastvalue = parsed;
+                        current *= parsed; 
+                        System.out.println(true);
                         break;
                     case "/":
-                        if (i == 0) {
-                            current = parsed;
-                        } else {
-                            if (parsed != 0) {
-                                current /= Math.abs(parsed);
-                            } else {
-                                break;
-                            }
-                        }
+                       if(current == 0) current = parsed;  
+                        current = current /= parsed;
+                        System.out.println(parsed);
                         break;
                     case "-":
                         current -= parsed;
                         break;
                     case "+":   
-                        current =  current + parsed;
+                    if (i == 0) {
+                        current += parsed;
+                    } else {
+                        if (parsed != 0) {
+                            current  += parsed;
+                        } else {
+                            break;
+                        }
+                    }
                         break;
                     case "%":
                     if (i == 0) {
@@ -544,22 +543,13 @@ class Transpiler {
                     }   
                     break;
                     case ">":  
-                    if (i == 0) {
-                        current = parsed;
-                    }else{
-
-                       if( current >= parsed) current = 1;
-                       else current = 0;
-                    } 
+                    if( current >= parsed) current = 1;
+                    else current = 0;
                     break;
                     case "<":
-                    if (i == 0) {
-                        current = parsed;
-                    }else{
-
-                       if( current <= parsed) current = 1;
-                       else current = 0;
-                    } 
+                 
+                    if( current <= parsed) current = 1;
+                    else current = 0;
                     
                     break;
                     default:

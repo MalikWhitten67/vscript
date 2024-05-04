@@ -1,5 +1,2 @@
-function main(){
-    return 1 + 1;
-}  
-
-print(main());
+ 
+print(25 * 5 > 0);
