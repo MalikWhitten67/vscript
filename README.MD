@@ -38,6 +38,17 @@ Beginner dev?
  - Added the ability to chain operators
  - Added ability to use \n within strings in print statements - aswell as adding two strings together
  
+3. 5/6/24  
+ - Fixed calculation issues with division
+ - Started working on functions
+ ```v
+ // will soon work
+ int main(int32 a , int32 b){
+    return a + b
+ }
+ ```
+ 
+
 
 # Road Map
 1. Scoped (Global|Private) - this is a must have currently int can be called within any scope - it would be effective if variables are bound to the parent container and cannot be accessed outside of it! 
