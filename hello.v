@@ -1,2 +1,3 @@
- 
-print(25 * 5 > 0);
+int main(int32 a, int32 b){
+    return a + b;
+} 
