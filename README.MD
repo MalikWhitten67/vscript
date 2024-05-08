@@ -47,6 +47,8 @@ Beginner dev?
     return a + b
  }
  ```
+ 4. 5/7/24
+  - Still working on getting functions working!
  
 
 

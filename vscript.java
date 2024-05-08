@@ -237,23 +237,17 @@ class GenerateAstTree {
                        System.out.println(d.opperands.toString());
                     }
                     String type = "";
+                    String name = ""; 
                     for (int _params = 0; _params < paramData.toString().length(); _params++) {
                         char _token = paramData.toString().charAt(_params);
+                        boolean end = false;
+                        
                         if (_token == '(' || _token == ')')
-                            continue; 
-                        if (Character.isWhitespace(_token) || _token == ',') {
-                            AstObject p = new AstObject();
-                            p.name = "function_params";
-                            p.type = "function_params";
-                            p.isVariable = true;
-                            p.Scoped = true;  
-                            _int.isFunc = true; 
-                            _int.children.add(p);
-                            break;
-                        }
-                        type += _token;
-
+                            continue;
+                         
+                        
                     }
+                    
 
                 }  
                 if(!_int.isFunc){

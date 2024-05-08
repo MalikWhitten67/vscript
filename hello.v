@@ -1,5 +1,5 @@
-int main(int32 a, int32 b){ 
+int main(a, b){ 
     return a + b;
 } 
-
-print(main(1, 2)); // 3
+ 
+print(1 + 1 * 5)
