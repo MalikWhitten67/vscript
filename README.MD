@@ -32,14 +32,16 @@ Beginner dev?
  - Parsed integer variables by their operator type; 
  - Fixed issue with whitespace within left hand assignments;  
  - Fixed improper math calculation
+  ![alt text](screenshots/image-1.png)
 
 2. 5/3/24 
  - Better code management / error handling 
  - Added the ability to chain operators
  - Added ability to use \n within strings in print statements - aswell as adding two strings together
- 
+ ![alt text](screenshots/image2.png)
 3. 5/6/24  
  - Fixed calculation issues with division
+
  - Started working on functions
  ```v
  // will soon work
@@ -49,6 +51,10 @@ Beginner dev?
  ```
  4. 5/7/24
   - Still working on getting functions working!
+
+ 5. 5/8/24
+  - Functions are shown to work
+  ![Functions Working](screenshots/image.png)
  
 
 
