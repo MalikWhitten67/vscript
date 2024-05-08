@@ -68,7 +68,9 @@ print(x); // x should not be working here
 Error: 
   - ![unsgined print](screenshots/image3.png)
 
-# Road Map![alt text](image.png)
+
+# Road Map!
+
 1. Scoped (Global|Private) - this is a must have currently int can be called within any scope - it would be effective if variables are bound to the parent container and cannot be accessed outside of it!  (Currently Working On)
 2. Functions (Currently Working On)
  - Being able to invoke functions within itself but also outside 
