@@ -1,6 +1,8 @@
-int main(a, b, c){ 
-    return a * b + c
-}   
+import "vscript.Math";
+int main(a, b){ 
+ int x = 100; this should be scoped
+ print(x);
+ return  a + b;
+}     
 
-print(main(2, 3, 4) + main(5, 6, 7))
-
+print(x); // x should not be working here

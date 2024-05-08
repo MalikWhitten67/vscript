@@ -45,7 +45,7 @@ Beginner dev?
  - Started working on functions
  ```v
  // will soon work
- int main(int32 a , int32 b){
+ int main(a , b){
     return a + b
  }
  ```
@@ -55,13 +55,24 @@ Beginner dev?
  5. 5/8/24
   - Functions are shown to work
   ![Functions Working](screenshots/image.png)
- 
+  - Added Scoped print statements and scoped variables;
+```v
+int main(a, b){ 
+  int x = 100; // this should be scoped
+  print(x); // this will also be scoped to the function
+  return  a + b;
+}     
 
+print(x); // x should not be working here
+``` 
+Error: 
+  - ![unsgined print](screenshots/image3.png)
 
-# Road Map
-1. Scoped (Global|Private) - this is a must have currently int can be called within any scope - it would be effective if variables are bound to the parent container and cannot be accessed outside of it! 
-2. Functions (CURRENTLY WORKING ON)
+# Road Map![alt text](image.png)
+1. Scoped (Global|Private) - this is a must have currently int can be called within any scope - it would be effective if variables are bound to the parent container and cannot be accessed outside of it!  (Currently Working On)
+2. Functions (Currently Working On)
  - Being able to invoke functions within itself but also outside 
 3. If Statements - the embodiment of any logic 
-4. Switch cases - performantttt
-5. Rewrite a subset in c++ 
+4. Imports and Exports;
+5. Switch cases - performantttt
+6. Rewrite a subset in c++ 
