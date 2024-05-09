@@ -1,9 +1,7 @@
-int main(){  
- int k =  100 * 100 / 5;
- print(k); 
- return 100 * 100;
+int main(a, b){  
+ int k =  100; 
+ print(d);
+ return a * b;
 }     
 
-main();
-
-print(main())
+main(10, 20); 

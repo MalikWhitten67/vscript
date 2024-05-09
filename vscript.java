@@ -37,6 +37,10 @@ class StringMethods {
         return yes;
     }
 
+    public String parse(String code){
+        return code.replaceAll("\"", "").replaceAll("'", "").replace("\\n",  " ");
+    }
+
 }
 
 class Utils{
@@ -44,7 +48,11 @@ class Utils{
         
         AstObject tree2 =  new AstObject();
         tree2.name = childAstObject.Variable_Name + "function_call";
-        new GenerateAstTree().generateTree(childAstObject.fullvalue, tree2, false, null);
+        tree2.children = childAstObject.children;
+        tree2.opperands = childAstObject.opperands;
+        tree2.params = childAstObject.params;
+        tree2.rawParams = childAstObject.rawParams;
+        new GenerateAstTree().generateTree(childAstObject.fullvalue, tree2, true, childAstObject); 
         new Transpiler().transpile(tree2, childAstObject.fullvalue.trim(), tree2.name);
     }
 }
@@ -129,6 +137,8 @@ class AstObject {
      * @description list of function parameters
      */
     ArrayList params = null;
+
+    ArrayList<AstObject> rawParams = new ArrayList<>();
     /**
      * @description multipurpose return value or simply a value;
      */
@@ -210,9 +220,7 @@ class GenerateAstTree {
                 while (i < data.length() && Character.isWhitespace(data.charAt(i))) {
                     _int.fullvalue += data.charAt(i);
                     i++;
-                }
-                
-                System.out.println(_int.name);
+                } 
 
                 if (i < data.length() && data.charAt(i) == '=') {
                     _int.fullvalue += data.charAt(i);
@@ -266,15 +274,15 @@ class GenerateAstTree {
                     String functionBody = "";
                     if(body.toString().contains("return")){
                         functionBody = "return" + body.toString().split("return")[1].split(";")[0].trim();
-                    }
+                    } 
                     _int.returnedValue = functionBody;
                      
-                    if(new StringMethods().containsOperator(functionBody)){  
-                       AstObject d = parseOperatorStatement(functionBody, tree, true);
+                    if(new StringMethods().containsOperator(functionBody)){    
+                       AstObject d = parseOperatorStatement(functionBody, tree, true);  
                        _int.children.add(d);
+                       _int.opperands = d.opperands;
                     }  
-                    _int.fullvalue = body.toString();
-                    generateTree(body.toString(), tree, true, _int); 
+                    _int.fullvalue = body.toString(); 
                     String name = ""; 
                     Boolean inParentheses = false;
                     for (int _params = 0; _params <= paramData.length(); _params++) {
@@ -294,12 +302,13 @@ class GenerateAstTree {
                                 if(name.contains("int")){
                                     name = name.split("int")[1];
                                 }
-                                p.name = name.trim();
+                                p.name = name.trim(); 
                                 p.type = "function_param";
                                 p.Scoped = true;
                                 p.isGlobal = false;
                                 p.function = _int;
-                                p.value = String.valueOf(0); 
+                                p.value = String.valueOf(0);  
+                                _int.rawParams.add(p); 
                                 _int.children.add(p);
                                 name = ""; 
                             }  
@@ -317,11 +326,12 @@ class GenerateAstTree {
                 }
                 _int.lines.add(i); 
                 _int.value = _int.value.trim();
+                _int.parentBind = "root";
                 if(isInFunction){
                     _int.Scoped = true;
+                    _int.parentBind = function.Variable_Name;
                     function.children.add(_int);
-                }else{
-                    
+                }else{ 
                    tree.children.add(_int);
                 }
 
@@ -332,9 +342,11 @@ class GenerateAstTree {
                 i += 5;
                 _print_statement.type = "print_statement";
                 _print_statement.name = "print";
+                _print_statement.parentBind = "root";
                 if(isInFunction){
-                    _print_statement.Scoped = true;
-                    _print_statement.function = function; 
+                    _print_statement.Scoped = true; 
+                    _print_statement.function = function;
+                    _print_statement.parentBind = function.Variable_Name; 
                 }
                 StringBuilder _print_body = new StringBuilder();
                 char currentChar;
@@ -457,14 +469,19 @@ class GenerateAstTree {
                 for(AstObject childAstObject : tree.children){  
                     if(childAstObject.name.contains("function")){
                         String name = String.valueOf(data.substring(i, Math.min(i + childAstObject.Variable_Name.length(), data.length())));
+                        ArrayList<String> params = new ArrayList<>();
                         if(name.equals(childAstObject.Variable_Name)){
-                            StringBuilder code = new StringBuilder();
+                            String code =  ""; 
                             while (i < data.length() && data.charAt(i) != ';') {
-                                code.append(data.charAt(i));
+                                code += data.charAt(i);
                                 i++;
+                            }   
+                            for(String p : code.replace(name, "").split(",")){
+                                  p = p.trim().replace("(", "").replace(")", "");
+                                 params.add(p);
                             }
-
-                            if(new StringMethods().isFunction(code.toString())){   
+                            if(new StringMethods().isFunction(code.toString())){    
+                                childAstObject.params = params;
                                 new Utils().runFunction(childAstObject); 
                             }
                         }
@@ -719,7 +736,7 @@ class Transpiler {
                 current += 2;
             }
         } 
-        return String.valueOf(Math.abs(fullValue));
+        return String.valueOf(Math.abs(fullValue)).trim();
     }
 
     /**
@@ -827,22 +844,28 @@ class Transpiler {
                 } else {
                     System.out.println(c.value);
                 }
-            } else if (c.type == "print_statement") {    
-                if(!c.children.isEmpty() && c.children.get(0).name.contains("int32_function") && !c.Scoped){
+            } else if (c.type == "print_statement") {     
+                if(!c.children.isEmpty() && c.children.get(0).name.contains("int32_function") && !c.parentBind.equals("root")){
                     AstObject child = c.children.get(0);   
                     if(child.children.get(0).type.equals("$op")){
                         AstObject operatorStatements = child.children.get(0);
                         List<String> operands = child.children.get(0).opperands; 
-                        int value = 0;        
-                        if(new StringMethods().isString(String.valueOf(child.returnedValue)) && new StringMethods().containsOperator(String.valueOf(child.returnedValue))){
+                        int value = 0;         
+                        if(new StringMethods().isString(String.valueOf(child.returnedValue))){
                             System.out.println(ParseOperandAsString(operatorStatements.opperands, node).trim());
-                        }else if(new StringMethods().containsOperator(String.valueOf(child.returnedValue))){
+                        }else{
                            System.out.print(ParseOperandAsInteger(operatorStatements.opperands, child).trim());
                         } 
-                        new Utils().runFunction(child);
-                    }  
+                         
+                    }else if(child.children.get(0).type.equals("$op_string")){ 
+                        AstObject operatorStatements = child.children.get(0);
+                        System.out.println(ParseOperandAsString(operatorStatements.opperands, node).trim());
+                    }else{
+                         
+                    } 
+                    new Utils().runFunction(child);
                 } 
-                else if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")  && !c.Scoped) {
+                else if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")  &&   !c.parentBind.equals("root")) {
                     AstObject child = c.children.get(0);  
                     if (child.type == "$op" && !new StringMethods().isString(c.value)) { 
                         String fullString = "";
@@ -911,7 +934,7 @@ class Transpiler {
                                         ArrayList<String> list = new ArrayList<>(); 
                                         for(String k : ob){   
                                             list.add(String.valueOf(k).trim());
-                                        }    
+                                        }     
                                         value += Integer.parseInt(parseOperandFunctionAsInteger(list, _child, node));
                                     }
                                 } 
@@ -926,20 +949,51 @@ class Transpiler {
  
                     }   
                     
-                } 
+                }  
                 else  if(!c.children.isEmpty() && c.children.get(0).type.equals("$op_string"))  System.out.println(ParseOperandAsString(c.children.get(0).opperands, node));
                   
                 else{   
+                    ArrayList<AstObject> params = new ArrayList<>();
                     if(c.children.size() > 0){
                         for(AstObject cAstObject : c.children){
                             if(cAstObject.Variable_Name.equals(c.value)){   
                                 System.out.println(cAstObject.value);
-                            } 
+                            } else if(cAstObject.type.equals("print_function_param")){ 
+                                params.add(cAstObject);
+                            }else if(cAstObject.name.equals("int32_function")){  
+                                ArrayList<String> Opperands = new ArrayList<>();
+                                if(params.size() > 0 ){
+                                    int i = 0;
+                                    for(AstObject param : params){ 
+                                        i++;
+                                        try {
+                                          cAstObject.children.get(i).value = String.valueOf(param.value);
+                                          Opperands.add(param.value);
+                                        } catch (Exception e) {
+                                           err.handler(err.one_to_many_params, filename, code.indexOf(c.fullvalue), filename, true);
+                                        }
+                                    }
+                                }      
+                                cAstObject.params = Opperands;
+                                System.out.println(parseOperandFunctionAsInteger(cAstObject.opperands, cAstObject, node));
+                                new Utils().runFunction(cAstObject);
+                            }
                         } 
                     }else{ 
-                        if(!c.Scoped) {
-                            err.handler(err.printing_null_value, filename, code.indexOf(c.fullvalue), filename, true);
-                        };
+                       int index = 0; 
+                       boolean exists = false;
+                       for(AstObject child : c.function.rawParams){
+                          index++; 
+                          String val = String.valueOf(c.function.params.toArray()[index - 1]);
+                          if(child.name.equals(c.value.trim())){
+                            System.out.println(val);
+                            exists = true;
+                          }
+                       } 
+
+                       if(!exists){
+                        err.handler(err.printing_null_value, filename, code.indexOf(c.fullvalue), filename, true);
+                       }
                     }
                     
                 }
