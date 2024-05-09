@@ -14,6 +14,14 @@ class StringMethods {
         return false;
     }
 
+    public Boolean isInteger(String val){
+        try {
+            Integer.parseInt(val); 
+            return true;
+        } catch (Exception e) {
+           return false;
+        }
+    }
     public boolean containsOperator(String code) {
         keyword keys = new keyword();
         Boolean hasoperator = false;
@@ -50,7 +58,7 @@ class Utils{
         tree2.name = childAstObject.Variable_Name + "function_call";
         tree2.children = childAstObject.children;
         tree2.opperands = childAstObject.opperands;
-        tree2.params = childAstObject.params;
+        tree2.params = childAstObject.params; 
         tree2.rawParams = childAstObject.rawParams;
         new GenerateAstTree().generateTree(childAstObject.fullvalue, tree2, true, childAstObject); 
         new Transpiler().transpile(tree2, childAstObject.fullvalue.trim(), tree2.name);
@@ -480,9 +488,14 @@ class GenerateAstTree {
                                   p = p.trim().replace("(", "").replace(")", "");
                                  params.add(p);
                             }
-                            if(new StringMethods().isFunction(code.toString())){    
-                                childAstObject.params = params;
-                                new Utils().runFunction(childAstObject); 
+                            if(new StringMethods().isFunction(code.toString())){
+                                int index = 0;
+                                for(String param : params){
+                                        index++;
+                                        childAstObject.rawParams.get(index - 1).value = param;
+                                }    
+                                childAstObject.params = params;  
+                                new Utils().runFunction(childAstObject);
                             }
                         }
                     }
@@ -691,13 +704,21 @@ class Transpiler {
             while (current < results.size()) {
                 String value = results.get(current); 
                 int intValue = 0;
-                for (AstObject childAstObject : node.children) {
+                int index = 0; 
+                for (AstObject childAstObject : node.children) {  
                     if (childAstObject.isVariable && childAstObject.Variable_Name.equals(value)) {
                         value = childAstObject.value; 
                         break;
                     }  
                     if(childAstObject.type.equals("print_function_param") && childAstObject.name.trim().equals(value.trim())){ 
                         value = childAstObject.value; 
+                        break;
+                    }else if(childAstObject.type.equals("function_param") && childAstObject.name.equals(value)){ 
+                        for(AstObject rawParam : node.rawParams){
+                            if(rawParam.name.equals(childAstObject.name)){ 
+                                value = rawParam.value;
+                            }
+                        } 
                         break;
                     }
                 } 
@@ -844,7 +865,7 @@ class Transpiler {
                 } else {
                     System.out.println(c.value);
                 }
-            } else if (c.type == "print_statement") {     
+            } else if (c.type == "print_statement") {    
                 if(!c.children.isEmpty() && c.children.get(0).name.contains("int32_function") && !c.parentBind.equals("root")){
                     AstObject child = c.children.get(0);   
                     if(child.children.get(0).type.equals("$op")){
@@ -951,7 +972,9 @@ class Transpiler {
                     
                 }  
                 else  if(!c.children.isEmpty() && c.children.get(0).type.equals("$op_string"))  System.out.println(ParseOperandAsString(c.children.get(0).opperands, node));
-                  
+                else if(c.children.isEmpty() && new StringMethods().isString(c.value) || c.children.isEmpty() && new StringMethods().isInteger(c.value)){
+                    System.out.println(new StringMethods().parse(c.value));
+                }
                 else{   
                     ArrayList<AstObject> params = new ArrayList<>();
                     if(c.children.size() > 0){
@@ -975,8 +998,8 @@ class Transpiler {
                                     }
                                 }      
                                 cAstObject.params = Opperands;
-                                System.out.println(parseOperandFunctionAsInteger(cAstObject.opperands, cAstObject, node));
                                 new Utils().runFunction(cAstObject);
+                                System.out.println(parseOperandFunctionAsInteger(cAstObject.opperands, cAstObject, node)); 
                             }
                         } 
                     }else{ 
@@ -985,8 +1008,7 @@ class Transpiler {
                        for(AstObject child : c.function.rawParams){
                           index++; 
                           String val = String.valueOf(c.function.params.toArray()[index - 1]);
-                          if(child.name.equals(c.value.trim())){
-                            System.out.println(val);
+                          if(child.name.equals(c.value.trim())){ 
                             exists = true;
                           }
                        } 

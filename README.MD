@@ -68,7 +68,7 @@ print(x); // x should not be working here
 Error: 
   - ![unsgined print](screenshots/image3.png)
 
-66. 5/9/24
+6. 5/9/24
 
 ```v
 int main(){  
