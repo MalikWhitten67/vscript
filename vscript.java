@@ -226,24 +226,25 @@ class GenerateAstTree {
 
                     StringBuilder body = new StringBuilder();
                     int bracketCount = 1;
-                    i++;
+                    i++; 
                     while (i < data.length() && bracketCount > 0 && data.charAt(i) != '}') {
                         char c = data.charAt(i);
+                         
                         if (c == '{') {
                             braceCount++;
-                        } else if (c == ')') { 
+                        } else if (c == '}') { 
                             bracketCount--;
                             if (bracketCount == 0)
                                 break;
-                        }
+                        } 
                         body.append(c);
                         i++;
-                    }    
-                    generateTree(body.toString().trim(), tree, true, _int);
-                    if(new StringMethods().containsOperator(body.toString().trim())){
-                       AstObject d = parseOperatorStatement(body.toString().trim(), tree, true);
+                    }     
+                    if(new StringMethods().containsOperator(body.toString().trim())){  
+                       AstObject d = parseOperatorStatement(body.toString().trim().replace("\\s+g", ""), tree, true);
                        _int.children.add(d);
-                    } 
+                    }  
+                    generateTree(body.toString(), tree, true, _int); 
                     String name = ""; 
                     Boolean inParentheses = false;
                     for (int _params = 0; _params <= paramData.length(); _params++) {
@@ -341,9 +342,9 @@ class GenerateAstTree {
                     if(!new StringMethods().isString(_print_body.toString()) && ch.name.equals("int32_function") && _print_body.toString().contains(ch.Variable_Name)){
                        CntainsFunction = true;
                     }
-                }
+                } 
                 if (hasOperator) {
-                    Boolean isstring = new StringMethods().isString(_print_body.toString());
+                    Boolean isstring = new StringMethods().isString(_print_body.toString());  
                     _print_statement.children.add(parseOperatorStatement(_print_body.toString(), tree, isstring));
                 } 
                 else{
@@ -399,8 +400,7 @@ class GenerateAstTree {
                 }
                
                 
-                if (!tree.children.contains(_print_statement))
-                    tree.children.add(_print_statement);
+                if (!tree.children.contains(_print_statement))  tree.children.add(_print_statement);
 
                 i++;
             }
@@ -428,8 +428,8 @@ class GenerateAstTree {
         }
     }
 
-    public AstObject parseOperatorStatement(String statement, AstObject tree, Boolean include_whitespaces) {
-
+    public AstObject parseOperatorStatement(String statement, AstObject tree, Boolean include_whitespaces) { 
+        statement = statement.trim();
         keyword key = new keyword();
         AstObject node = new AstObject();
         node.name = "operator_statement";
@@ -459,9 +459,8 @@ class GenerateAstTree {
         }
         
         for (int jj = 0; jj < statement.length(); jj++) {
-            char current = statement.charAt(jj);
-             
-            if (!include_whitespaces && Character.isWhitespace(current) || String.valueOf(current).isEmpty()) { 
+            char current = statement.charAt(jj); 
+            if (!include_whitespaces && Character.isWhitespace(current)) { 
                 continue;
             } else{
 
@@ -672,7 +671,7 @@ class Transpiler {
                 }
                 current += 2;
             }
-        }
+        } 
         return String.valueOf(Math.abs(fullValue));
     }
 
@@ -781,11 +780,10 @@ class Transpiler {
                 } else {
                     System.out.println(c.value);
                 }
-            } else if (c.type == "print_statement") {    
-                if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")) {
-                    AstObject child = c.children.get(0);
-                    if (child.type == "$op" && !new StringMethods().isString(c.value)) {
-                        Boolean containsFunction = false; 
+            } else if (c.type == "print_statement") {  
+                if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")  && !c.Scoped) {
+                    AstObject child = c.children.get(0); 
+                    if (child.type == "$op" && !new StringMethods().isString(c.value)) { 
                         String fullString = "";
 
                         for(int i = 0; i < c.children.get(0).opperands.size(); i++){
@@ -841,17 +839,19 @@ class Transpiler {
                                     if(_child2.Variable_Name.equals(_child.name)){  
                                         for(int k = 0; k < _child2.children.subList(1, _child2.children.size()).toArray().length; k++){
                                              AstObject _child3 = _child2.children.subList(1, _child2.children.size()).get(k);
-                                             _child3.value = String.valueOf(_child.params.toArray()[k]);
+                                            if(_child3.params != null){
+                                                _child3.value = String.valueOf(_child.params.toArray()[k]);
+                                            }
                                         }
                                     }
                                 } 
                                 for(AstObject _child2 : node.children){ 
-                                    if(_child2.Variable_Name.equals(_child.name)){   
+                                    if(_child2.Variable_Name.equals(_child.name)){ 
                                         List<String> ob = _child2.children.get(0).opperands;
                                         ArrayList<String> list = new ArrayList<>(); 
                                         for(String k : ob){   
                                             list.add(String.valueOf(k).trim());
-                                        }  
+                                        }    
                                         value += Integer.parseInt(parseOperandFunctionAsInteger(list, _child, node));
                                     }
                                 } 
@@ -861,6 +861,7 @@ class Transpiler {
                             System.out.println(value);
                         }
                         else{  
+                            System.out.print(true);
                             System.out.println(ParseOperandAsInteger(c.children.get(0).opperands, node));
                         }
                         
