@@ -24,6 +24,19 @@ class StringMethods {
         }
         return hasoperator;
     }
+
+    public boolean isFunction(String code){
+        boolean yes = false;
+        if(!new StringMethods().isString(code) && !new StringMethods().containsOperator(code)
+        && code.contains("(") && code.contains(")")
+        ){
+           yes = true;
+        }else{
+            yes = false;
+        }
+        return yes;
+    }
+
 }
 
 class ReadFile {
@@ -138,8 +151,7 @@ class GenerateAstTree {
         class Search {
             public AstObject child(String name) {
                 for (AstObject child : tree.children) {
-                    if (child.isVariable && child.name.equals(name)) {
-                        System.out.println(true);
+                    if (child.isVariable && child.name.equals(name)) { 
                         return child;
                     }
                 }
@@ -244,6 +256,7 @@ class GenerateAstTree {
                        AstObject d = parseOperatorStatement(body.toString().trim().replace("\\s+g", ""), tree, true);
                        _int.children.add(d);
                     }  
+                    _int.fullvalue = body.toString();
                     generateTree(body.toString(), tree, true, _int); 
                     String name = ""; 
                     Boolean inParentheses = false;
@@ -403,7 +416,7 @@ class GenerateAstTree {
                 if (!tree.children.contains(_print_statement))  tree.children.add(_print_statement);
 
                 i++;
-            }
+            } 
 
             else if (data.substring(i, Math.min(i + 6, data.length())).equals("import")) {
                 i += 6;
@@ -423,6 +436,28 @@ class GenerateAstTree {
 
                 tree.children.add(_import);
             }  else{
+                StringBuilder str = new StringBuilder(); 
+                for(AstObject childAstObject : tree.children){  
+                    if(childAstObject.name.contains("function")){
+                        String name = String.valueOf(data.substring(i, Math.min(i + childAstObject.Variable_Name.length(), data.length())));
+                        if(name.equals(childAstObject.Variable_Name)){
+                            StringBuilder code = new StringBuilder();
+                            while (i < data.length() && data.charAt(i) != ';') {
+                                code.append(data.charAt(i));
+                                i++;
+                            }
+
+                            if(new StringMethods().isFunction(code.toString())){ 
+                                GenerateAstTree t = new GenerateAstTree(); 
+                                AstObject tree2 =  new AstObject();
+                                tree2.name = childAstObject.Variable_Name + "function_call";
+                                generateTree(childAstObject.fullvalue, tree2, false, null);
+                                new Transpiler().transpile(tree2, childAstObject.fullvalue.trim(), name);
+                                
+                            }
+                        }
+                    }
+                }
                 i++;
             }
         }
@@ -860,8 +895,7 @@ class Transpiler {
 
                             System.out.println(value);
                         }
-                        else{  
-                            System.out.print(true);
+                        else{   
                             System.out.println(ParseOperandAsInteger(c.children.get(0).opperands, node));
                         }
                         
@@ -874,8 +908,8 @@ class Transpiler {
                 else{   
                     if(c.children.size() > 0){
                         for(AstObject cAstObject : c.children){
-                            if(cAstObject.Variable_Name.equals(c.value)){  
-                                System.out.print(cAstObject.value);
+                            if(cAstObject.Variable_Name.equals(c.value)){   
+
                             }else {
                                 if(!c.Scoped) err.handler(err.printing_null_value, filename, 0, filename, true);
                             }

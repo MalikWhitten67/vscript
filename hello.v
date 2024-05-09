@@ -1,8 +1,5 @@
-import "vscript.Math";
-int main(a, b){ 
- int x = 100; 
- print(x);
- return a + b
+int main(){  
+ print(100 * 200 / 5)
 }     
 
-print(main(1, 2) + main(2,3)); 
+main();
