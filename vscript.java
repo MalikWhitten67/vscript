@@ -176,17 +176,8 @@ class OperatorNode {
 
 class GenerateAstTree {
     public void generateTree(String data, AstObject tree, Boolean isInFunction, AstObject function ) {
-        class Search {
-            public AstObject child(String name) {
-                for (AstObject child : tree.children) {
-                    if (child.isVariable && child.name.equals(name)) { 
-                        return child;
-                    }
-                }
-                return null;
-            }
-            
-        } 
+        
+          
         int i = 0;
         while (i < data.length()) {
             String token = data.substring(i, Math.min(i + 3, data.length()));
@@ -343,7 +334,50 @@ class GenerateAstTree {
                    tree.children.add(_int);
                 }
 
-            } else if (data.substring(i, Math.min(i + 5, data.length())).equals("print")) {
+            } 
+            if (data.substring(i, Math.min(i + 6, data.length())).equals("import")) {
+                i += 6;
+                AstObject _import = new AstObject();
+                _import.type = "es1_import";
+                _import.name = "import";
+                _import.value = "";
+                AstObject exported = new AstObject();
+
+                // Find value
+                while (i < data.length() && Character.isWhitespace(data.charAt(i))) {
+                    i++;
+                }
+                while (i < data.length() && data.charAt(i) != '-') {
+                    exported.name  += new StringMethods().parse(String.valueOf(data.charAt(i++)));
+                    _import.lines.add(i); 
+                }  
+                while (i < data.length() && Character.isWhitespace(data.charAt(i))) {
+                    i++;
+                }
+                i ++;;
+                
+                 
+                while (i < data.length() && data.charAt(i + 1) != ';') {  
+                    exported.value += data.charAt(i + 1); 
+                    _import.lines.add(i); 
+                    i++;
+                }   
+                if(new StringMethods().parse(exported.value.trim()).trim().contains("as")){
+                    String as = exported.value.split("as")[1];
+                    exported.value = exported.value.split("as")[0];
+                    if(as.trim().equals("global")){
+                        exported.isGlobal = true;
+                    }
+                }  
+                String importedCode = new ReadFile().open(new StringMethods().parse(exported.value).trim());
+                if(exported.isGlobal){ 
+                    generateTree(importedCode, tree, false, null);
+                }else{
+                    AstObject Tree = new AstObject();
+                    generateTree(importedCode, Tree, false, null);
+                }
+            } 
+            else if (data.substring(i, Math.min(i + 5, data.length())).equals("print")) {
                 keyword keys = new keyword();
                 AstObject _print_statement = new AstObject();
                 _print_statement.fullvalue += data.substring(i, Math.min(i + 5, data.length()));
@@ -455,24 +489,7 @@ class GenerateAstTree {
                 i++;
             } 
 
-            else if (data.substring(i, Math.min(i + 6, data.length())).equals("import")) {
-                i += 6;
-                AstObject _import = new AstObject();
-                _import.type = "es4_import";
-                _import.name = "import";
-                _import.value = "";
-
-                // Find value
-                while (i < data.length() && Character.isWhitespace(data.charAt(i))) {
-                    i++;
-                }
-                while (i < data.length() && data.charAt(i) != ';') {
-                    _import.value += data.charAt(i++);
-                    _import.lines.add(i);
-                }
-
-                tree.children.add(_import);
-            }  else{
+              else{
                 StringBuilder str = new StringBuilder(); 
                 for(AstObject childAstObject : tree.children){  
                     if(childAstObject.name.contains("function")){
@@ -630,8 +647,8 @@ class Transpiler {
                 String value = results.get(current); 
                 int intValue = 0; 
                 if(!new StringMethods().isString(value)){
-                    index++; 
-                    intValue = Integer.parseInt(String.valueOf(funObject.params.toArray()[index - 1]));
+                    index++;   
+                    intValue = Integer.parseInt(String.valueOf(funObject.params.get(funObject.params.size() > 1 ? index - 1 : 0)));
                     for(AstObject child : tree.children){
                         if(child.Variable_Name.equals(funObject.name)){
                             AstObject c = child.children.get(index);
@@ -836,9 +853,12 @@ class Transpiler {
      */
     public void transpile(AstObject node, String code, String filename) {
         keyword _keywords = new keyword();
-        Errors err = new Errors();
-        node.children.forEach((c) -> {
+        Errors err = new Errors(); 
+        for(AstObject c : node.children){ 
             if(c.name == "int32_function"){ 
+            }
+            if(c.type == "es1_import"){  
+                 
             }
             if (c.name == "int32_variable") {
                 GenerateAstTree g = new GenerateAstTree();
@@ -1003,18 +1023,26 @@ class Transpiler {
                             }
                         } 
                     }else{ 
-                       int index = 0; 
-                       boolean exists = false;
-                       for(AstObject child : c.function.rawParams){
-                          index++; 
-                          String val = String.valueOf(c.function.params.toArray()[index - 1]);
-                          if(child.name.equals(c.value.trim())){ 
-                            exists = true;
+                       if(c.function != null && !c.function.rawParams.isEmpty()){  
+                        int index = 0; 
+                        boolean exists = false;
+                        for(AstObject child : c.function.rawParams){
+                            index++; 
+                                String val = String.valueOf(c.function.params.toArray()[index - 1]);
+                                 if(child.name.equals(c.value.trim())){ 
+                                   exists = true;
+                                 }
+                        } 
+ 
+                        if(!exists){
+                         err.handler(err.printing_null_value, filename, code.indexOf(c.fullvalue), filename, true);
+                        }
+                        
+                       }else{
+                          for(AstObject child : node.children){
+                            System.out.println(child.name);
                           }
-                       } 
-
-                       if(!exists){
-                        err.handler(err.printing_null_value, filename, code.indexOf(c.fullvalue), filename, true);
+                          System.out.println(c.value);
                        }
                     }
                     
@@ -1024,7 +1052,7 @@ class Transpiler {
             }
           
             
-        });
+        };
     }
 }
 

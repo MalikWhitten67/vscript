@@ -1,8 +1,9 @@
-int main(a, b){  
- int k =  a + b * 100; 
- print(k);  
- return 100 * 100; 
-}     
+import round -> "Apis/Math.v" as global;
 
-main(10, 20); 
-print(100);
+int main(a, b){  
+ int k = a + b * 100; 
+ print(k);  
+ return a + b; 
+}     
+ 
+print(round(25)) // imported from Apis/Math.v
