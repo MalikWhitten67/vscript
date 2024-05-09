@@ -81,9 +81,12 @@ main();
 
 print(main())
 ```
+ ![alt text](screenshots/image4.png)
  - You can now call functions aswell as print returned values!
  - Fixed issue where printing a number without an opperand threw an error aswell as printing strings without opperands
- ![alt text](screenshots/image4.png)
+ - Fixed issue where printing strings by themselves or numbers by themselves threw an indexing error
+ - Added ability to print strings + variables or parameters
+ - Added ability to print parameters
 
 # Road Map!
 
