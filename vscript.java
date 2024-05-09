@@ -39,6 +39,16 @@ class StringMethods {
 
 }
 
+class Utils{
+    public void runFunction(AstObject childAstObject){
+        
+        AstObject tree2 =  new AstObject();
+        tree2.name = childAstObject.Variable_Name + "function_call";
+        new GenerateAstTree().generateTree(childAstObject.fullvalue, tree2, false, null);
+        new Transpiler().transpile(tree2, childAstObject.fullvalue.trim(), tree2.name);
+    }
+}
+
 class ReadFile {
     public String open(String file) {
         try {
@@ -251,9 +261,16 @@ class GenerateAstTree {
                         } 
                         body.append(c);
                         i++;
-                    }     
-                    if(new StringMethods().containsOperator(body.toString().trim())){  
-                       AstObject d = parseOperatorStatement(body.toString().trim().replace("\\s+g", ""), tree, true);
+                    }   
+
+                    String functionBody = "";
+                    if(body.toString().contains("return")){
+                        functionBody = "return" + body.toString().split("return")[1].split(";")[0].trim();
+                    }
+                    _int.returnedValue = functionBody;
+                     
+                    if(new StringMethods().containsOperator(functionBody)){  
+                       AstObject d = parseOperatorStatement(functionBody, tree, true);
                        _int.children.add(d);
                     }  
                     _int.fullvalue = body.toString();
@@ -355,7 +372,7 @@ class GenerateAstTree {
                     if(!new StringMethods().isString(_print_body.toString()) && ch.name.equals("int32_function") && _print_body.toString().contains(ch.Variable_Name)){
                        CntainsFunction = true;
                     }
-                } 
+                }  
                 if (hasOperator) {
                     Boolean isstring = new StringMethods().isString(_print_body.toString());  
                     _print_statement.children.add(parseOperatorStatement(_print_body.toString(), tree, isstring));
@@ -410,7 +427,7 @@ class GenerateAstTree {
                     if (child.isVariable && _print_body.toString().contains(child.Variable_Name)) {
                         _print_statement.children.add(child);
                     }
-                }
+                } 
                
                 
                 if (!tree.children.contains(_print_statement))  tree.children.add(_print_statement);
@@ -447,13 +464,8 @@ class GenerateAstTree {
                                 i++;
                             }
 
-                            if(new StringMethods().isFunction(code.toString())){ 
-                                GenerateAstTree t = new GenerateAstTree(); 
-                                AstObject tree2 =  new AstObject();
-                                tree2.name = childAstObject.Variable_Name + "function_call";
-                                generateTree(childAstObject.fullvalue, tree2, false, null);
-                                new Transpiler().transpile(tree2, childAstObject.fullvalue.trim(), name);
-                                
+                            if(new StringMethods().isFunction(code.toString())){   
+                                new Utils().runFunction(childAstObject); 
                             }
                         }
                     }
@@ -588,7 +600,7 @@ class Transpiler {
                 String value = results.get(current); 
                 int intValue = 0; 
                 if(!new StringMethods().isString(value)){
-                    index++;
+                    index++; 
                     intValue = Integer.parseInt(String.valueOf(funObject.params.toArray()[index - 1]));
                     for(AstObject child : tree.children){
                         if(child.Variable_Name.equals(funObject.name)){
@@ -815,9 +827,23 @@ class Transpiler {
                 } else {
                     System.out.println(c.value);
                 }
-            } else if (c.type == "print_statement") {  
-                if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")  && !c.Scoped) {
-                    AstObject child = c.children.get(0); 
+            } else if (c.type == "print_statement") {    
+                if(!c.children.isEmpty() && c.children.get(0).name.contains("int32_function") && !c.Scoped){
+                    AstObject child = c.children.get(0);   
+                    if(child.children.get(0).type.equals("$op")){
+                        AstObject operatorStatements = child.children.get(0);
+                        List<String> operands = child.children.get(0).opperands; 
+                        int value = 0;        
+                        if(new StringMethods().isString(String.valueOf(child.returnedValue)) && new StringMethods().containsOperator(String.valueOf(child.returnedValue))){
+                            System.out.println(ParseOperandAsString(operatorStatements.opperands, node).trim());
+                        }else if(new StringMethods().containsOperator(String.valueOf(child.returnedValue))){
+                           System.out.print(ParseOperandAsInteger(operatorStatements.opperands, child).trim());
+                        } 
+                        new Utils().runFunction(child);
+                    }  
+                } 
+                else if (!c.children.isEmpty() && c.children.get(0).type.equals("$op")  && !c.Scoped) {
+                    AstObject child = c.children.get(0);  
                     if (child.type == "$op" && !new StringMethods().isString(c.value)) { 
                         String fullString = "";
 
@@ -866,8 +892,7 @@ class Transpiler {
                                 }else{
                                     currentOperator = token.trim();
                                 }
-                            }  
-                            
+                            }   
                             int value = 0;
                             for (AstObject _child : child.children) { 
                                 for(AstObject _child2 : node.children){ 
@@ -897,8 +922,7 @@ class Transpiler {
                         }
                         else{   
                             System.out.println(ParseOperandAsInteger(c.children.get(0).opperands, node));
-                        }
-                        
+                        } 
  
                     }   
                     
@@ -909,13 +933,13 @@ class Transpiler {
                     if(c.children.size() > 0){
                         for(AstObject cAstObject : c.children){
                             if(cAstObject.Variable_Name.equals(c.value)){   
-
-                            }else {
-                                if(!c.Scoped) err.handler(err.printing_null_value, filename, 0, filename, true);
-                            }
+                                System.out.println(cAstObject.value);
+                            } 
                         } 
-                    }else{
-                        if(!c.Scoped) err.handler(err.printing_null_value, filename, code.indexOf(c.fullvalue), filename, true);
+                    }else{ 
+                        if(!c.Scoped) {
+                            err.handler(err.printing_null_value, filename, code.indexOf(c.fullvalue), filename, true);
+                        };
                     }
                     
                 }

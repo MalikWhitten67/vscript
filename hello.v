@@ -1,5 +1,9 @@
 int main(){  
- print(100 * 200 / 5)
+ int k =  100 * 100 / 5;
+ print(k); 
+ return 100 * 100;
 }     
 
 main();
+
+print(main())
