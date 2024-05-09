@@ -1,3 +1,9 @@
-int round(x) {
-  return x  + .5;
+int floor(x) { 
+  return x;
+}
+
+int round(x) { 
+  print("rounding " + x + " yuh");
+  return x * 10 / 0.5;
 } 
+  

@@ -784,7 +784,7 @@ class Transpiler {
      * @param include_white_spaces
      * @return
      */
-    private String ParseOperandAsString(ArrayList<String> opperands, AstObject node) {
+    private String ParseOperandAsString(ArrayList<String> opperands, AstObject node) { 
         String fullvalue = "";
         if (opperands.size() > 0) {
             int lastvalue = 0;
@@ -793,7 +793,7 @@ class Transpiler {
 
             String ss = "";
             for (int i = 0; i < opperands.size(); i++) {
-                String item = opperands.get(i);
+                String item = opperands.get(i); 
                 if (isOperator(item)) {
                     operator = item;
                     results.add(ss);
@@ -806,15 +806,25 @@ class Transpiler {
                     results.add(ss);
                     ss = "";
                 }
-            }
+            } 
             String current = "";
-
+            String val = "";
             for (int i = 0; i < results.size(); i++) {
-                String value = String.valueOf(results.toArray()[i]);
-                for (AstObject childAstObject : node.children) {
+                val += String.valueOf(results.toArray()[i]);
+            }
+             
+            for (int i = 0; i < results.size(); i++) {
+                String value = String.valueOf(results.toArray()[i]); 
+                if(value.isEmpty()){
+                    value = "\\space";
+                } 
+                for (AstObject childAstObject : node.children) { 
                     if (childAstObject.isVariable && childAstObject.Variable_Name.equals(value.trim())) {
                         value = childAstObject.value;
-                    }
+                       
+                    }else if(childAstObject.type.equals("function_param") && childAstObject.name.equals(value.trim())){
+                         value = childAstObject.value; 
+                    } 
                 }
                 switch (operator) {
                     case "*":
@@ -826,7 +836,7 @@ class Transpiler {
                     case "-":
                         break;
                     case "+":
-                        current += "" + value;
+                        current += value;
                     case "%":
 
                     case ">":
@@ -844,6 +854,9 @@ class Transpiler {
         if (fullvalue.contains("\\n")) {
             fullvalue = fullvalue.replace("\\n", "\n");
         }
+        if(fullvalue.contains("\\space")){
+            fullvalue = fullvalue.replace("\\space", " ");
+        }
         return fullvalue;
     }
 
@@ -853,7 +866,7 @@ class Transpiler {
      */
     public void transpile(AstObject node, String code, String filename) {
         keyword _keywords = new keyword();
-        Errors err = new Errors(); 
+        Errors err = new Errors();  
         for(AstObject c : node.children){ 
             if(c.name == "int32_function"){ 
             }
@@ -991,7 +1004,9 @@ class Transpiler {
                     }   
                     
                 }  
-                else  if(!c.children.isEmpty() && c.children.get(0).type.equals("$op_string"))  System.out.println(ParseOperandAsString(c.children.get(0).opperands, node));
+                else  if(!c.children.isEmpty() && c.children.get(0).type.equals("$op_string"))  {
+                    System.out.println(ParseOperandAsString(c.children.get(0).opperands, node));
+                }
                 else if(c.children.isEmpty() && new StringMethods().isString(c.value) || c.children.isEmpty() && new StringMethods().isInteger(c.value)){
                     System.out.println(new StringMethods().parse(c.value));
                 }
