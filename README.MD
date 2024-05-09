@@ -82,6 +82,7 @@ main();
 print(main())
 ```
  - You can now call functions aswell as print returned values!
+ - Fixed issue where printing a number without an opperand threw an error aswell as printing strings without opperands
  ![alt text](screenshots/image4.png)
 
 # Road Map!
