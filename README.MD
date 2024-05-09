@@ -68,6 +68,21 @@ print(x); // x should not be working here
 Error: 
   - ![unsgined print](screenshots/image3.png)
 
+66. 5/9/24
+
+```v
+int main(){  
+ int k =  100 * 100 / 5;
+ print(k); 
+ return 100 * 100;
+}     
+
+main();
+
+print(main())
+```
+ - You can now call functions aswell as print returned values!
+ ![alt text](screenshots/image4.png)
 
 # Road Map!
 
