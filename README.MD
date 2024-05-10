@@ -22,9 +22,10 @@ Beginner dev?
 
 
 # TODO LOG
--  Improve printing values , currently we cannot add more than one operator assignment;
--  Allow function calls  / working out a scope system
+-  Improve printing values , currently we cannot add more than one operator assignment [Done];
+-  Allow function calls  / working out a scope system [Done]l
 -  Refacotoring - organizing different parts of the lexer / some optimizations  
+-  Error handling
 # Changelog
 
 1. 5/2/24 
